@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — AVCOE Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(ellipse at top, rgba(99,102,241,0.08) 0%, transparent 60%);
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+        }
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .auth-logo-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--accent-gradient);
+            border-radius: var(--radius-lg);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+        .auth-title { font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 4px; }
+        .auth-subtitle { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 28px; }
+        .auth-footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--text-muted); }
+        .auth-footer a { color: var(--accent-primary); }
+        .demo-accounts { margin-top: 24px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+        .demo-accounts h4 { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .demo-account { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.8rem; }
+        .demo-account-email { color: var(--text-secondary); }
+        .demo-fill { color: var(--accent-primary); cursor: pointer; background: none; border: none; font-size: 0.8rem; }
+        .demo-fill:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-card animate-fade-in">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🎒</div>
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="auth-subtitle">Sign in to AVCOE Lost & Found</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="you@avcoe.edu" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                </div>
+                <div id="error" style="color:var(--danger);font-size:0.85rem;margin-bottom:16px;display:none;"></div>
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+                    <span id="loginText">Sign In</span>
+                    <span id="loginSpinner" class="spinner" style="display:none;"></span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Don't have an account? <a href="/register.html">Create one</a>
+            </div>
+
+            <div class="demo-accounts">
+                <h4>Demo Accounts</h4>
+                <div class="demo-account">
+                    <span class="demo-account-email">finder@example.com</span>
+                    <button class="demo-fill" onclick="fillDemo('finder@example.com','password123')">Fill</button>
+                </div>
+                <div class="demo-account">
+                    <span class="demo-account-email">claimant1@example.com</span>
+                    <button class="demo-fill" onclick="fillDemo('claimant1@example.com','password123')">Fill</button>
+                </div>
+                <div class="demo-account">
+                    <span class="demo-account-email">admin@example.com</span>
+                    <button class="demo-fill" onclick="fillDemo('admin@example.com','admin123')">Fill</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        if (auth.isLoggedIn()) window.location.href = '/dashboard.html';
+
+        function fillDemo(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const text = document.getElementById('loginText');
+            const spinner = document.getElementById('loginSpinner');
+            const error = document.getElementById('error');
+
+            btn.disabled = true;
+            text.style.display = 'none';
+            spinner.style.display = 'block';
+            error.style.display = 'none';
+
+            try {
+                const response = await api.login({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                });
+                auth.setAuth(response);
+                window.location.href = '/dashboard.html';
+            } catch (err) {
+                error.textContent = err.message || 'Invalid credentials';
+                error.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                text.style.display = 'inline';
+                spinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

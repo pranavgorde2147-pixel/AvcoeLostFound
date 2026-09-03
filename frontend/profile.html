@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — AVCOE Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 28px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .profile-avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .profile-info h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+        }
+        .profile-email {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0 0 8px 0;
+        }
+        .profile-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            padding: 24px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .profile-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .profile-detail-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .profile-detail-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .profile-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .edit-form {
+            display: none;
+            padding: 24px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .edit-form.active {
+            display: block;
+        }
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .edit-form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--card-bg);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            background: var(--hover-bg, rgba(255,255,255,0.05));
+        }
+        .tab-btn.active {
+            background: var(--accent-primary);
+            color: #fff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .claim-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        .claim-list-item:hover {
+            border-color: var(--accent-primary);
+        }
+        .claim-item-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1;
+            min-width: 0;
+        }
+        .claim-item-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .claim-item-date {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .account-section {
+            padding: 24px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .account-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .account-row:last-child {
+            border-bottom: none;
+        }
+        .account-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .account-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 640px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+            .profile-info {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .profile-actions {
+                justify-content: center;
+            }
+            .edit-form-actions {
+                justify-content: center;
+            }
+            .claim-list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .claim-item-date {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard.html" class="sidebar-logo">
+                    <span class="sidebar-logo-icon">🎒</span>
+                    <div>
+                        <div>Lost & Found</div>
+                        <div class="sidebar-subtitle">AVCOE Campus</div>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav"></nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar"></div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-name"></div>
+                        <div class="sidebar-user-role"></div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="auth.logout()" title="Logout" style="padding:6px;">⏻</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="top-bar-title">Profile</div>
+                <div class="top-bar-spacer"></div>
+                <div class="top-bar-actions">
+                    <a href="/notifications.html" class="notification-btn" title="Notifications">🔔<span class="notification-badge" style="display:none;">0</span></a>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="animate-fade-in-up" style="margin-bottom:24px;">
+                    <h1 style="margin-bottom:8px;">My Profile</h1>
+                    <p style="color:var(--text-muted);">Manage your account and view your activity.</p>
+                </div>
+
+                <div class="profile-header" id="profileHeader">
+                    <div class="profile-avatar" id="profileAvatar"></div>
+                    <div class="profile-info">
+                        <h1 id="profileName">—</h1>
+                        <p class="profile-email" id="profileEmail">—</p>
+                        <span class="badge badge-active" id="profileRole">—</span>
+                    </div>
+                </div>
+
+                <div class="profile-details" id="profileDetails">
+                    <div class="profile-detail-item">
+                        <span class="profile-detail-label">Department</span>
+                        <span class="profile-detail-value" id="detailDepartment">—</span>
+                    </div>
+                    <div class="profile-detail-item">
+                        <span class="profile-detail-label">Roll Number</span>
+                        <span class="profile-detail-value" id="detailRollNumber">—</span>
+                    </div>
+                    <div class="profile-detail-item">
+                        <span class="profile-detail-label">Phone</span>
+                        <span class="profile-detail-value" id="detailPhone">—</span>
+                    </div>
+                    <div class="profile-detail-item">
+                        <span class="profile-detail-label">Member Since</span>
+                        <span class="profile-detail-value" id="detailJoined">—</span>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn btn-primary" id="editProfileBtn" onclick="toggleEditMode()">✏️ Edit Profile</button>
+                </div>
+
+                <div class="edit-form" id="editForm">
+                    <h2 style="margin-bottom:20px;font-size:1.1rem;">Edit Profile</h2>
+                    <div class="edit-form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="editFullName" class="form-input" placeholder="Your full name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" id="editPhone" class="form-input" placeholder="Your phone number">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <input type="text" id="editDepartment" class="form-input" placeholder="Your department">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Roll Number</label>
+                            <input type="text" id="editRollNumber" class="form-input" placeholder="Your roll number">
+                        </div>
+                    </div>
+                    <div class="edit-form-actions">
+                        <button class="btn btn-secondary" onclick="toggleEditMode()">Cancel</button>
+                        <button class="btn btn-primary" id="saveProfileBtn" onclick="saveProfile()">💾 Save</button>
+                    </div>
+                </div>
+
+                <h2 style="margin-bottom:16px;font-size:1.2rem;">My Items</h2>
+
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="lost" onclick="switchTab('lost', this)">🔍 Lost Items</button>
+                    <button class="tab-btn" data-tab="found" onclick="switchTab('found', this)">📦 Found Items</button>
+                    <button class="tab-btn" data-tab="claims" onclick="switchTab('claims', this)">📋 My Claims</button>
+                </div>
+
+                <div class="tab-content active" id="tabLost">
+                    <div class="items-grid" id="lostItemsGrid">
+                        <div class="skeleton" style="height:300px;"></div>
+                        <div class="skeleton" style="height:300px;"></div>
+                    </div>
+                    <div id="lostEmpty" class="empty-state" style="display:none;">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-title">No lost items yet</div>
+                        <div class="empty-state-desc">You haven't reported any lost items. <a href="/create-lost.html">Report one now</a></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tabFound">
+                    <div class="items-grid" id="foundItemsGrid">
+                        <div class="skeleton" style="height:300px;"></div>
+                        <div class="skeleton" style="height:300px;"></div>
+                    </div>
+                    <div id="foundEmpty" class="empty-state" style="display:none;">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-title">No found items yet</div>
+                        <div class="empty-state-desc">You haven't reported any found items. <a href="/create-found.html">Report one now</a></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tabClaims">
+                    <div id="claimsList">
+                        <div class="skeleton" style="height:60px;margin-bottom:12px;"></div>
+                        <div class="skeleton" style="height:60px;margin-bottom:12px;"></div>
+                        <div class="skeleton" style="height:60px;"></div>
+                    </div>
+                    <div id="claimsEmpty" class="empty-state" style="display:none;">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-title">No claims yet</div>
+                        <div class="empty-state-desc">You haven't filed any claims. Browse items to find what you lost.</div>
+                    </div>
+                </div>
+
+                <h2 style="margin:32px 0 16px;font-size:1.2rem;">Account</h2>
+
+                <div class="account-section">
+                    <div class="account-row">
+                        <span class="account-label">Email</span>
+                        <span class="account-value" id="accountEmail">—</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="account-label">Role</span>
+                        <span class="account-value" id="accountRole">—</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="account-label">Status</span>
+                        <span class="account-value" style="color:var(--success);">Active</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-danger" onclick="auth.logout()" style="width:100%;justify-content:center;">⏻ Logout</button>
+            </div>
+        </main>
+
+        <nav class="mobile-nav"><div class="mobile-nav-items"></div></nav>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        if (!auth.requireAuth()) throw new Error('Not authenticated');
+        initSidebar();
+        initMobileNav();
+
+        let profileData = null;
+        let editMode = false;
+
+        function renderProfile(profile) {
+            const user = auth.getUser();
+            const fullName = profile.fullName || user.fullName;
+            const email = profile.email || user.email;
+            const role = profile.role || user.role;
+
+            const avatarEl = document.getElementById('profileAvatar');
+            avatarEl.textContent = auth.getInitials(fullName);
+            avatarEl.style.background = auth.getAvatarColor(fullName);
+
+            document.getElementById('profileName').textContent = fullName;
+            document.getElementById('profileEmail').textContent = email;
+            document.getElementById('profileRole').textContent = role;
+
+            document.getElementById('detailDepartment').textContent = profile.department || '—';
+            document.getElementById('detailRollNumber').textContent = profile.rollNumber || '—';
+            document.getElementById('detailPhone').textContent = profile.phone || '—';
+            document.getElementById('detailJoined').textContent = profile.createdAt ? formatDate(profile.createdAt) : '—';
+
+            document.getElementById('accountEmail').textContent = email;
+            document.getElementById('accountRole').textContent = role;
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            const form = document.getElementById('editForm');
+            const btn = document.getElementById('editProfileBtn');
+
+            if (editMode) {
+                form.classList.add('active');
+                btn.style.display = 'none';
+                document.getElementById('editFullName').value = profileData.fullName || '';
+                document.getElementById('editPhone').value = profileData.phone || '';
+                document.getElementById('editDepartment').value = profileData.department || '';
+                document.getElementById('editRollNumber').value = profileData.rollNumber || '';
+            } else {
+                form.classList.remove('active');
+                btn.style.display = '';
+            }
+        }
+
+        async function saveProfile() {
+            const btn = document.getElementById('saveProfileBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const data = {
+                    fullName: document.getElementById('editFullName').value.trim(),
+                    phone: document.getElementById('editPhone').value.trim(),
+                    department: document.getElementById('editDepartment').value.trim(),
+                    rollNumber: document.getElementById('editRollNumber').value.trim()
+                };
+
+                await api.updateProfile(data);
+                profileData = { ...profileData, ...data };
+                renderProfile(profileData);
+
+                const user = auth.getUser();
+                if (user) {
+                    user.fullName = data.fullName;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+
+                initSidebar();
+                toggleEditMode();
+                showToast('Profile updated successfully', 'success');
+            } catch (err) {
+                showToast(err.message || 'Failed to update profile', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Save';
+            }
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)).classList.add('active');
+
+            if (tabId === 'lost') loadLostItems();
+            else if (tabId === 'found') loadFoundItems();
+            else if (tabId === 'claims') loadMyClaims();
+        }
+
+        function renderItemCard(item, type) {
+            const badgeClass = type === 'LOST' ? 'badge-lost' : 'badge-found';
+            return `
+                <a href="/item.html?id=${item.id}" class="item-card hover-lift" style="text-decoration:none;color:inherit;">
+                    <div class="item-card-image">
+                        ${item.images && item.images.length > 0
+                            ? `<img src="http://localhost:8080${item.images[0].imageUrl}" alt="${escapeHtml(item.itemName)}">`
+                            : `<span style="font-size:3rem;">${getCategoryIcon(item.category)}</span>`
+                        }
+                    </div>
+                    <div class="item-card-body">
+                        <div class="item-card-header">
+                            <div class="item-card-title">${escapeHtml(item.itemName)}</div>
+                            <span class="badge ${badgeClass}">${type}</span>
+                        </div>
+                        <div class="item-card-desc">${escapeHtml(item.description || '')}</div>
+                        <div class="item-card-meta">
+                            <span>${getLocationIcon()} ${escapeHtml(item.locationName || 'Campus')}</span>
+                            <span>🕐 ${formatDate(item.createdAt)}</span>
+                        </div>
+                    </div>
+                </a>
+            `;
+        }
+
+        async function loadLostItems() {
+            const grid = document.getElementById('lostItemsGrid');
+            const empty = document.getElementById('lostEmpty');
+            grid.innerHTML = '<div class="skeleton" style="height:300px;"></div><div class="skeleton" style="height:300px;"></div>';
+            empty.style.display = 'none';
+            grid.style.display = '';
+
+            try {
+                const items = await api.getMyItems('LOST');
+                if (!items || items.length === 0) {
+                    grid.style.display = 'none';
+                    empty.style.display = 'flex';
+                    return;
+                }
+                grid.innerHTML = items.map(item => renderItemCard(item, 'LOST')).join('');
+            } catch (err) {
+                console.error('Error loading lost items:', err);
+                grid.style.display = 'none';
+                empty.style.display = 'flex';
+                document.querySelector('#lostEmpty .empty-state-title').textContent = 'Failed to load items';
+                document.querySelector('#lostEmpty .empty-state-desc').textContent = 'Something went wrong. Please try again.';
+            }
+        }
+
+        async function loadFoundItems() {
+            const grid = document.getElementById('foundItemsGrid');
+            const empty = document.getElementById('foundEmpty');
+            grid.innerHTML = '<div class="skeleton" style="height:300px;"></div><div class="skeleton" style="height:300px;"></div>';
+            empty.style.display = 'none';
+            grid.style.display = '';
+
+            try {
+                const items = await api.getMyItems('FOUND');
+                if (!items || items.length === 0) {
+                    grid.style.display = 'none';
+                    empty.style.display = 'flex';
+                    return;
+                }
+                grid.innerHTML = items.map(item => renderItemCard(item, 'FOUND')).join('');
+            } catch (err) {
+                console.error('Error loading found items:', err);
+                grid.style.display = 'none';
+                empty.style.display = 'flex';
+                document.querySelector('#foundEmpty .empty-state-title').textContent = 'Failed to load items';
+                document.querySelector('#foundEmpty .empty-state-desc').textContent = 'Something went wrong. Please try again.';
+            }
+        }
+
+        async function loadMyClaims() {
+            const list = document.getElementById('claimsList');
+            const empty = document.getElementById('claimsEmpty');
+            list.innerHTML = '<div class="skeleton" style="height:60px;margin-bottom:12px;"></div><div class="skeleton" style="height:60px;margin-bottom:12px;"></div>';
+            empty.style.display = 'none';
+            list.style.display = '';
+
+            try {
+                const claims = await api.getMyClaims();
+                if (!claims || claims.length === 0) {
+                    list.style.display = 'none';
+                    empty.style.display = 'flex';
+                    return;
+                }
+                list.innerHTML = claims.map(claim => `
+                    <a href="/item.html?id=${claim.itemId}" class="claim-list-item" style="text-decoration:none;color:inherit;">
+                        <div class="claim-item-left">
+                            <span class="claim-item-name">${escapeHtml(claim.itemName || 'Item')}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            ${getStatusBadge(claim.status)}
+                            <span class="claim-item-date">${formatDate(claim.createdAt)}</span>
+                        </div>
+                    </a>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading claims:', err);
+                list.style.display = 'none';
+                empty.style.display = 'flex';
+                document.querySelector('#claimsEmpty .empty-state-title').textContent = 'Failed to load claims';
+                document.querySelector('#claimsEmpty .empty-state-desc').textContent = 'Something went wrong. Please try again.';
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                profileData = await api.getProfile();
+                renderProfile(profileData);
+            } catch (err) {
+                console.error('Error loading profile:', err);
+                const user = auth.getUser();
+                profileData = {
+                    fullName: user.fullName,
+                    email: user.email,
+                    role: user.role
+                };
+                renderProfile(profileData);
+                showToast('Could not load full profile data', 'warning');
+            }
+
+            loadLostItems();
+            loadMyClaims();
+        }
+
+        loadProfile();
+        setInterval(loadUnreadCount, 30000);
+    </script>
+</body>
+</html>

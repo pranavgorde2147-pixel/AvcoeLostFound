@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — AVCOE Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(ellipse at top, rgba(99,102,241,0.08) 0%, transparent 60%); }
+        .auth-card { width: 100%; max-width: 480px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-xl); padding: 40px; }
+        .auth-logo { text-align: center; margin-bottom: 28px; }
+        .auth-logo-icon { width: 56px; height: 56px; background: var(--accent-gradient); border-radius: var(--radius-lg); display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; }
+        .auth-title { font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 4px; }
+        .auth-subtitle { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 28px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .auth-footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--text-muted); }
+        .auth-footer a { color: var(--accent-primary); }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-card animate-fade-in">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🎒</div>
+                <h1 class="auth-title">Create Account</h1>
+                <p class="auth-subtitle">Join AVCOE Lost & Found</p>
+            </div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label" for="fullName">Full Name</label>
+                    <input type="text" id="fullName" class="form-input" placeholder="Your full name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="you@avcoe.edu" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Min 8 characters" minlength="8" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="department">Department</label>
+                        <select id="department" class="form-select">
+                            <option value="">Select</option>
+                            <option>Computer Engineering</option>
+                            <option>Information Technology</option>
+                            <option>Electronics Engineering</option>
+                            <option>Mechanical Engineering</option>
+                            <option>Civil Engineering</option>
+                            <option>Electrical Engineering</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="rollNumber">Roll Number</label>
+                        <input type="text" id="rollNumber" class="form-input" placeholder="e.g. CE-2021-001">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="phone">Phone (Optional)</label>
+                    <input type="tel" id="phone" class="form-input" placeholder="Your phone number">
+                </div>
+                <div id="error" style="color:var(--danger);font-size:0.85rem;margin-bottom:16px;display:none;"></div>
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="registerBtn">
+                    <span id="registerText">Create Account</span>
+                    <span id="registerSpinner" class="spinner" style="display:none;"></span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="/login.html">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        if (auth.isLoggedIn()) window.location.href = '/dashboard.html';
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('registerBtn');
+            const text = document.getElementById('registerText');
+            const spinner = document.getElementById('registerSpinner');
+            const error = document.getElementById('error');
+
+            btn.disabled = true;
+            text.style.display = 'none';
+            spinner.style.display = 'block';
+            error.style.display = 'none';
+
+            try {
+                const response = await api.register({
+                    fullName: document.getElementById('fullName').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    department: document.getElementById('department').value,
+                    rollNumber: document.getElementById('rollNumber').value,
+                    phone: document.getElementById('phone').value,
+                });
+                auth.setAuth(response);
+                window.location.href = '/dashboard.html';
+            } catch (err) {
+                error.textContent = err.message || 'Registration failed';
+                error.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                text.style.display = 'inline';
+                spinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

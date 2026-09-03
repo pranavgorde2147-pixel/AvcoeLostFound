@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications — AVCOE Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        .notification-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .notification-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .notification-header .unread-count {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+        .mark-read-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .mark-read-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .mark-read-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .notification-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: background var(--transition-fast);
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+        }
+        .notification-item:hover {
+            background: var(--bg-card-hover);
+        }
+        .notification-item.unread {
+            background: rgba(99, 102, 241, 0.06);
+        }
+        .notification-item.unread:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .notification-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-primary);
+        }
+        .notification-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .notification-item.unread .notification-icon {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+        .notification-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .notification-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        .notification-message {
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .notification-item:not(.unread) .notification-title {
+            color: var(--text-secondary);
+        }
+
+        .load-more-container {
+            text-align: center;
+            padding: 24px 0;
+        }
+
+        .empty-notifications {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+        .empty-notifications-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        .empty-notifications-title {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .empty-notifications-desc {
+            font-size: 0.9rem;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+            .notification-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .notification-item {
+                padding: 14px 16px;
+            }
+            .notification-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard.html" class="sidebar-logo">
+                    <span class="sidebar-logo-icon">🎒</span>
+                    <div>
+                        <div>Lost & Found</div>
+                        <div class="sidebar-subtitle">AVCOE Campus</div>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav"></nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar"></div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-name"></div>
+                        <div class="sidebar-user-role"></div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="auth.logout()" title="Logout" style="padding:6px;">⏻</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="top-bar-title">Notifications</div>
+                <div class="top-bar-spacer"></div>
+                <div class="top-bar-actions">
+                    <a href="/notifications.html" class="notification-btn" title="Notifications" style="position:relative;">🔔<span class="notification-badge" style="display:none;">0</span></a>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="animate-fade-in-up">
+                    <div class="notification-header">
+                        <div>
+                            <h1>Notifications <span class="unread-count" id="unreadLabel"></span></h1>
+                        </div>
+                        <button class="mark-read-btn" id="markAllBtn" onclick="markAllRead()" disabled>
+                            <span>✓</span> Mark All as Read
+                        </button>
+                    </div>
+                </div>
+
+                <div class="notification-list" id="notificationList">
+                    <div class="notification-item" style="justify-content:center;padding:40px;">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+
+                <div id="emptyState" class="empty-notifications" style="display:none;">
+                    <div class="empty-notifications-icon">🔔</div>
+                    <div class="empty-notifications-title">No notifications yet</div>
+                    <div class="empty-notifications-desc">When you receive claims, messages, or updates, they'll appear here.</div>
+                </div>
+
+                <div class="load-more-container" id="loadMoreContainer" style="display:none;">
+                    <button class="btn btn-secondary" id="loadMoreBtn" onclick="loadMore()">Load More</button>
+                </div>
+            </div>
+        </main>
+
+        <nav class="mobile-nav"><div class="mobile-nav-items"></div></nav>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        if (!auth.requireAuth()) throw new Error('Not authenticated');
+        initSidebar();
+        initMobileNav();
+
+        const typeIcons = {
+            CLAIM_RECEIVED: '📋',
+            MESSAGE_RECEIVED: '💬',
+            VERIFICATION_SENT: '🔐',
+            VERIFICATION_ANSWERED: '✓',
+            CLAIM_STATUS_CHANGED: '📊',
+            OWNERSHIP_CONFIRMED: '🎉',
+            HANDOVER_SCHEDULED: '📅',
+            ITEM_RETURNED: '✅',
+            REPORT_RECEIVED: '⚠️',
+            SYSTEM: 'ℹ️'
+        };
+
+        let currentPage = 0;
+        let totalPages = 1;
+        let notifications = [];
+        let loading = false;
+
+        async function loadNotifications(reset = false) {
+            if (loading) return;
+            loading = true;
+
+            const list = document.getElementById('notificationList');
+            const emptyState = document.getElementById('emptyState');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            const markAllBtn = document.getElementById('markAllBtn');
+
+            if (reset) {
+                currentPage = 0;
+                notifications = [];
+                list.innerHTML = '<div class="notification-item" style="justify-content:center;padding:40px;"><div class="spinner"></div></div>';
+                emptyState.style.display = 'none';
+                loadMoreContainer.style.display = 'none';
+            }
+
+            try {
+                const data = await api.getNotifications(currentPage);
+                const page = data.content || [];
+                totalPages = data.totalPages || 1;
+
+                if (reset) {
+                    notifications = page;
+                } else {
+                    notifications = notifications.concat(page);
+                }
+
+                if (notifications.length === 0) {
+                    list.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    loadMoreContainer.style.display = 'none';
+                } else {
+                    list.style.display = 'flex';
+                    emptyState.style.display = 'none';
+                    renderNotifications();
+
+                    const unreadCount = notifications.filter(n => !n.read).length;
+                    markAllBtn.disabled = unreadCount === 0;
+                    const unreadLabel = document.getElementById('unreadLabel');
+                    unreadLabel.textContent = unreadCount > 0 ? `(${unreadCount} unread)` : '';
+
+                    if (currentPage < totalPages - 1) {
+                        loadMoreContainer.style.display = 'block';
+                        document.getElementById('loadMoreBtn').disabled = false;
+                        document.getElementById('loadMoreBtn').textContent = 'Load More';
+                    } else {
+                        loadMoreContainer.style.display = 'none';
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading notifications:', err);
+                list.innerHTML = '<div class="notification-item" style="justify-content:center;padding:40px;color:var(--danger);">Failed to load notifications</div>';
+                loadMoreContainer.style.display = 'none';
+            } finally {
+                loading = false;
+            }
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notificationList');
+            list.innerHTML = notifications.map(n => {
+                const icon = typeIcons[n.notificationType] || 'ℹ️';
+                const isRead = n.read;
+                const readClass = isRead ? '' : 'unread';
+                const href = getNotificationHref(n);
+
+                return `
+                    <a href="${href}" class="notification-item ${readClass}" onclick="handleNotificationClick(event, ${JSON.stringify(n).replace(/"/g, '&quot;')})">
+                        <div class="notification-icon">${icon}</div>
+                        <div class="notification-body">
+                            <div class="notification-title">${escapeHtml(n.title || n.notificationType)}</div>
+                            <div class="notification-message">${escapeHtml(n.message || '')}</div>
+                            <div class="notification-time">${formatDate(n.createdAt)}</div>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        function getNotificationHref(n) {
+            const refType = n.referenceType;
+            const refId = n.referenceId;
+
+            if (refType === 'CLAIM' && refId) {
+                return `/item.html?id=${refId}`;
+            }
+            if (refType === 'CONVERSATION' || refType === 'HANDOVER') {
+                return '/messages.html';
+            }
+            return '#';
+        }
+
+        function handleNotificationClick(event, notification) {
+            if (notification.read) return;
+            event.preventDefault();
+
+            markSingleRead(notification).then(() => {
+                const href = getNotificationHref(notification);
+                window.location.href = href;
+            });
+        }
+
+        async function markSingleRead(notification) {
+            notification.read = true;
+            renderNotifications();
+
+            const unreadCount = notifications.filter(n => !n.read).length;
+            document.getElementById('markAllBtn').disabled = unreadCount === 0;
+            document.getElementById('unreadLabel').textContent = unreadCount > 0 ? `(${unreadCount} unread)` : '';
+            loadUnreadCount();
+        }
+
+        async function markAllRead() {
+            const btn = document.getElementById('markAllBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Marking...';
+
+            try {
+                await api.markAllNotificationsRead();
+                notifications.forEach(n => n.read = true);
+                renderNotifications();
+                document.getElementById('unreadLabel').textContent = '';
+                loadUnreadCount();
+                showToast('All notifications marked as read', 'success');
+            } catch (err) {
+                console.error('Error marking notifications read:', err);
+                showToast('Failed to mark as read', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<span>✓</span> Mark All as Read';
+            }
+        }
+
+        function loadMore() {
+            currentPage++;
+            const btn = document.getElementById('loadMoreBtn');
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+            loadNotifications(false);
+        }
+
+        loadNotifications(true);
+        setInterval(loadUnreadCount, 30000);
+    </script>
+</body>
+</html>

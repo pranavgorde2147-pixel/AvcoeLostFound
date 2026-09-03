@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost Items — AVCOE Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard.html" class="sidebar-logo">
+                    <span class="sidebar-logo-icon">🎒</span>
+                    <div>
+                        <div>Lost & Found</div>
+                        <div class="sidebar-subtitle">AVCOE Campus</div>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav"></nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar"></div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-name"></div>
+                        <div class="sidebar-user-role"></div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="auth.logout()" title="Logout" style="padding:6px;">⏻</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="top-bar-title">Lost Items</div>
+                <div class="top-bar-spacer"></div>
+                <div class="top-bar-actions">
+                    <a href="/notifications.html" class="notification-btn" title="Notifications">🔔<span class="notification-badge" style="display:none;">0</span></a>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="animate-fade-in-up" style="margin-bottom:24px;">
+                    <h1 style="margin-bottom:8px;">🔍 Lost Items</h1>
+                    <p style="color:var(--text-muted);">Browse reported lost items on campus. Found something? Help return it!</p>
+                </div>
+
+                <div class="search-bar" style="margin-bottom:20px;">
+                    <input type="text" id="searchInput" class="form-input" placeholder="Search lost items..." style="flex:1;min-width:0;">
+                    <select id="locationFilter" class="form-input" style="max-width:180px;">
+                        <option value="">All Locations</option>
+                    </select>
+                    <button class="btn btn-primary" id="searchBtn" onclick="loadItems(0)">Search</button>
+                </div>
+
+                <div class="filter-chips" id="filterChips" style="margin-bottom:24px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="filter-chip active" data-category="" onclick="setCategory(this)">All</button>
+                    <button class="filter-chip" data-category="ELECTRONICS" onclick="setCategory(this)">📱 Electronics</button>
+                    <button class="filter-chip" data-category="BAGS" onclick="setCategory(this)">🎒 Bags</button>
+                    <button class="filter-chip" data-category="BOOKS" onclick="setCategory(this)">📚 Books</button>
+                    <button class="filter-chip" data-category="ID_CARDS" onclick="setCategory(this)">🪪 ID Cards</button>
+                    <button class="filter-chip" data-category="WALLETS" onclick="setCategory(this)">👛 Wallets</button>
+                    <button class="filter-chip" data-category="KEYS" onclick="setCategory(this)">🔑 Keys</button>
+                    <button class="filter-chip" data-category="DOCUMENTS" onclick="setCategory(this)">📄 Documents</button>
+                    <button class="filter-chip" data-category="CLOTHING" onclick="setCategory(this)">👕 Clothing</button>
+                    <button class="filter-chip" data-category="ACCESSORIES" onclick="setCategory(this)">⌚ Accessories</button>
+                    <button class="filter-chip" data-category="STATIONERY" onclick="setCategory(this)">✏️ Stationery</button>
+                    <button class="filter-chip" data-category="OTHER" onclick="setCategory(this)">📦 Other</button>
+                </div>
+
+                <div class="items-grid" id="itemsGrid">
+                    <div class="skeleton" style="height:300px;"></div>
+                    <div class="skeleton" style="height:300px;"></div>
+                    <div class="skeleton" style="height:300px;"></div>
+                </div>
+
+                <div id="emptyState" class="empty-state" style="display:none;">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-title">No lost items found</div>
+                    <div class="empty-state-desc">Try adjusting your search or filters.</div>
+                </div>
+
+                <div id="pagination" class="pagination" style="display:none;margin-top:28px;display:flex;justify-content:center;gap:8px;"></div>
+            </div>
+        </main>
+
+        <nav class="mobile-nav"><div class="mobile-nav-items"></div></nav>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        if (!auth.requireAuth()) throw new Error('Not authenticated');
+        initSidebar();
+        initMobileNav();
+
+        let currentPage = 0;
+        const PAGE_SIZE = 12;
+        let currentCategory = '';
+        let currentSearch = '';
+        let currentLocation = '';
+
+        const searchInput = document.getElementById('searchInput');
+        const locationFilter = document.getElementById('locationFilter');
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') loadItems(0);
+        });
+
+        async function loadLocations() {
+            try {
+                const locations = await api.getLocations();
+                locations.forEach(loc => {
+                    const opt = document.createElement('option');
+                    opt.value = loc.name || loc;
+                    opt.textContent = loc.name || loc;
+                    locationFilter.appendChild(opt);
+                });
+            } catch { /* ignore */ }
+        }
+
+        function setCategory(el) {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            currentCategory = el.dataset.category;
+            loadItems(0);
+        }
+
+        async function loadItems(page = 0) {
+            currentPage = page;
+            currentSearch = searchInput.value.trim();
+            currentLocation = locationFilter.value;
+
+            const grid = document.getElementById('itemsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const paginationEl = document.getElementById('pagination');
+
+            grid.innerHTML = `
+                <div class="skeleton" style="height:300px;"></div>
+                <div class="skeleton" style="height:300px;"></div>
+                <div class="skeleton" style="height:300px;"></div>
+            `;
+            emptyState.style.display = 'none';
+            paginationEl.style.display = 'none';
+
+            const params = {
+                type: 'LOST',
+                page: currentPage,
+                size: PAGE_SIZE
+            };
+            if (currentSearch) params.search = currentSearch;
+            if (currentCategory) params.category = currentCategory;
+            if (currentLocation) params.location = currentLocation;
+
+            try {
+                const data = await api.getItems(params);
+                const items = data.content || [];
+                const totalPages = data.totalPages || 0;
+
+                if (items.length === 0) {
+                    grid.style.display = 'none';
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+
+                grid.style.display = '';
+                emptyState.style.display = 'none';
+
+                grid.innerHTML = items.map(item => `
+                    <a href="/item.html?id=${item.id}" class="item-card hover-lift" style="text-decoration:none;color:inherit;">
+                        <div class="item-card-image">
+                            ${item.images && item.images.length > 0 ? `<img src="http://localhost:8080${item.images[0].imageUrl}" alt="${escapeHtml(item.itemName)}">` : `<span style="font-size:3rem;">${getCategoryIcon(item.category)}</span>`}
+                        </div>
+                        <div class="item-card-body">
+                            <div class="item-card-header">
+                                <div class="item-card-title">${escapeHtml(item.itemName)}</div>
+                                <span class="badge badge-lost">LOST</span>
+                            </div>
+                            <div class="item-card-desc">${escapeHtml(item.description || '')}</div>
+                            <div class="item-card-meta">
+                                <span>${getLocationIcon()} ${escapeHtml(item.locationName || 'Campus')}</span>
+                                <span>🕐 ${formatDate(item.createdAt)}</span>
+                            </div>
+                        </div>
+                    </a>
+                `).join('');
+
+                renderPagination(totalPages);
+            } catch (err) {
+                console.error('Error loading lost items:', err);
+                grid.innerHTML = '';
+                emptyState.style.display = 'flex';
+                document.querySelector('.empty-state-title').textContent = 'Something went wrong';
+                document.querySelector('.empty-state-desc').textContent = 'Failed to load items. Please try again.';
+            }
+        }
+
+        function renderPagination(totalPages) {
+            const paginationEl = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                paginationEl.style.display = 'none';
+                return;
+            }
+
+            paginationEl.style.display = 'flex';
+            let html = '';
+
+            html += `<button class="btn btn-secondary btn-sm" ${currentPage === 0 ? 'disabled' : ''} onclick="loadItems(${currentPage - 1})">‹ Prev</button>`;
+
+            for (let i = 0; i < totalPages; i++) {
+                if (i === 0 || i === totalPages - 1 || Math.abs(i - currentPage) <= 2) {
+                    html += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-secondary'}" onclick="loadItems(${i})">${i + 1}</button>`;
+                } else if (Math.abs(i - currentPage) === 3) {
+                    html += `<span style="padding:6px;color:var(--text-muted);">…</span>`;
+                }
+            }
+
+            html += `<button class="btn btn-secondary btn-sm" ${currentPage >= totalPages - 1 ? 'disabled' : ''} onclick="loadItems(${currentPage + 1})">Next ›</button>`;
+
+            paginationEl.innerHTML = html;
+        }
+
+        loadLocations();
+        loadItems(0);
+        setInterval(loadUnreadCount, 30000);
+    </script>
+</body>
+</html>

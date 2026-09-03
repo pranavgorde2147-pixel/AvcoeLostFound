@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Details — AVCOE Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        .item-detail-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+            align-items: start;
+        }
+        .item-main { display: flex; flex-direction: column; gap: 24px; }
+        .item-sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: color var(--transition-fast);
+        }
+        .back-btn:hover { color: var(--accent-primary); }
+
+        .item-hero {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .item-hero-title { font-size: 1.6rem; font-weight: 700; }
+
+        .item-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .item-gallery-image {
+            aspect-ratio: 4/3;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition-fast);
+        }
+        .item-gallery-image:hover { border-color: var(--accent-primary); transform: scale(1.01); }
+        .item-gallery-image img { width: 100%; height: 100%; object-fit: cover; }
+        .item-gallery-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+        }
+        .item-gallery-placeholder-icon { font-size: 3rem; }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: rgba(99, 102, 241, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .info-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .info-value { font-size: 0.95rem; font-weight: 500; }
+
+        .reporter-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .reporter-info { flex: 1; }
+        .reporter-name { font-size: 0.95rem; font-weight: 600; }
+        .reporter-role { font-size: 0.8rem; color: var(--text-muted); text-transform: capitalize; }
+
+        .description-section {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .characteristics-section {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .characteristics-hidden-note {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            color: var(--warning);
+        }
+
+        .action-buttons { display: flex; flex-direction: column; gap: 12px; }
+
+        .claims-list { display: flex; flex-direction: column; gap: 12px; }
+        .claim-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+        .claim-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .claimant-name { font-size: 0.9rem; font-weight: 600; flex: 1; }
+        .claim-message {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+        .claim-actions { display: flex; gap: 8px; }
+
+        .matches-section { display: flex; flex-direction: column; gap: 12px; }
+        .match-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            text-decoration: none;
+            color: inherit;
+            transition: all var(--transition-fast);
+        }
+        .match-card:hover { border-color: var(--accent-primary); transform: translateX(4px); }
+        .match-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .match-info { flex: 1; min-width: 0; }
+        .match-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .match-location { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+        .match-indicator {
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            flex-shrink: 0;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        @media (max-width: 1024px) {
+            .item-detail-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 640px) {
+            .item-hero-title { font-size: 1.3rem; }
+            .item-gallery { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard.html" class="sidebar-logo">
+                    <span class="sidebar-logo-icon">🎒</span>
+                    <div>
+                        <div>Lost & Found</div>
+                        <div class="sidebar-subtitle">AVCOE Campus</div>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav"></nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar"></div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-name"></div>
+                        <div class="sidebar-user-role"></div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="auth.logout()" title="Logout" style="padding:6px;">⏻</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="top-bar-title">Item Details</div>
+                <div class="top-bar-spacer"></div>
+                <div class="top-bar-actions">
+                    <a href="/notifications.html" class="notification-btn" title="Notifications">🔔<span class="notification-badge" style="display:none;">0</span></a>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div id="loadingState" style="padding:40px 0;">
+                    <div class="skeleton" style="height:28px;width:120px;margin-bottom:20px;"></div>
+                    <div class="skeleton" style="height:40px;width:300px;margin-bottom:24px;"></div>
+                    <div style="display:grid;grid-template-columns:1fr 360px;gap:24px;">
+                        <div>
+                            <div class="skeleton" style="height:300px;margin-bottom:24px;"></div>
+                            <div class="skeleton" style="height:160px;"></div>
+                        </div>
+                        <div>
+                            <div class="skeleton" style="height:200px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="itemContent" style="display:none;">
+                    <div class="animate-fade-in-up">
+                        <button class="back-btn" onclick="history.back()">← Back</button>
+
+                        <div class="item-hero" style="margin-top:8px;">
+                            <span id="itemTypeBadge"></span>
+                            <h1 class="item-hero-title" id="itemName"></h1>
+                            <span id="itemStatusBadge"></span>
+                        </div>
+                    </div>
+
+                    <div class="item-detail-layout" style="margin-top:24px;">
+                        <div class="item-main animate-fade-in-up">
+                            <div class="card" id="galleryCard">
+                                <div class="item-gallery" id="itemGallery"></div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">Details</div>
+                                </div>
+                                <div id="itemInfo"></div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">Description</div>
+                                </div>
+                                <div class="description-section" id="itemDescription"></div>
+                            </div>
+
+                            <div class="card" id="characteristicsCard" style="display:none;">
+                                <div class="card-header">
+                                    <div class="card-title">Identifying Characteristics</div>
+                                </div>
+                                <div class="characteristics-section" id="itemCharacteristics"></div>
+                            </div>
+
+                            <div class="card" id="conditionCard" style="display:none;">
+                                <div class="card-header">
+                                    <div class="card-title">Condition</div>
+                                </div>
+                                <div class="description-section" id="itemCondition"></div>
+                            </div>
+
+                            <div id="matchesSection" style="display:none;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div class="card-title">Possible Matches</div>
+                                    </div>
+                                    <div class="matches-section" id="matchesList"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-sidebar animate-fade-in-up" style="animation-delay:0.1s;">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">Reported By</div>
+                                </div>
+                                <div class="reporter-card" id="reporterSection"></div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">Actions</div>
+                                </div>
+                                <div class="action-buttons" id="actionButtons"></div>
+                            </div>
+
+                            <div class="card" id="claimsCard" style="display:none;">
+                                <div class="card-header">
+                                    <div class="card-title">Claims</div>
+                                </div>
+                                <div class="claims-list" id="claimsList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorState" style="display:none;text-align:center;padding:80px 20px;">
+                    <div class="empty-state-icon">😵</div>
+                    <div class="empty-state-title">Item Not Found</div>
+                    <div class="empty-state-desc" id="errorMessage">The item you're looking for doesn't exist or has been removed.</div>
+                    <a href="/dashboard.html" class="btn btn-primary" style="margin-top:20px;">Go to Dashboard</a>
+                </div>
+            </div>
+        </main>
+
+        <nav class="mobile-nav"><div class="mobile-nav-items"></div></nav>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        if (!auth.requireAuth()) throw new Error('Not authenticated');
+        initSidebar();
+        initMobileNav();
+
+        const user = auth.getUser();
+        const itemId = new URLSearchParams(window.location.search).get('id');
+        let itemData = null;
+
+        if (!itemId) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'No item ID provided.';
+        } else {
+            loadItem();
+        }
+
+        async function loadItem() {
+            try {
+                itemData = await api.getItem(itemId);
+                if (!itemData) throw new Error('Item not found');
+
+                document.title = `${itemData.itemName} — AVCOE Lost & Found`;
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('itemContent').style.display = 'block';
+
+                renderTypeBadge();
+                renderName();
+                renderStatusBadge();
+                renderGallery();
+                renderInfo();
+                renderDescription();
+                renderCharacteristics();
+                renderCondition();
+                renderReporter();
+                renderActions();
+
+                loadMatches();
+                if (itemData.itemType === 'FOUND' && isReporter()) {
+                    loadClaims();
+                }
+            } catch (err) {
+                console.error('Load item error:', err);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                document.getElementById('errorMessage').textContent = err.message || 'Failed to load item details.';
+            }
+        }
+
+        function isReporter() {
+            if (!itemData || !itemData.reporter) return false;
+            return itemData.reporter.id === user.id;
+        }
+
+        function renderTypeBadge() {
+            const isLost = itemData.itemType === 'LOST';
+            document.getElementById('itemTypeBadge').innerHTML =
+                `<span class="badge badge-${isLost ? 'lost' : 'found'}" style="font-size:0.85rem;padding:6px 14px;">${itemData.itemType}</span>`;
+        }
+
+        function renderName() {
+            document.getElementById('itemName').textContent = itemData.itemName;
+        }
+
+        function renderStatusBadge() {
+            const status = itemData.status || 'ACTIVE';
+            document.getElementById('itemStatusBadge').innerHTML = getStatusBadge(status);
+        }
+
+        async function loadImages() {
+            try {
+                const images = await api.getItemImages(itemId);
+                return Array.isArray(images) ? images : (images.content || []);
+            } catch {
+                return [];
+            }
+        }
+
+        async function renderGallery() {
+            const gallery = document.getElementById('itemGallery');
+            const images = await loadImages();
+
+            if (images.length === 0) {
+                gallery.innerHTML = `
+                    <div class="item-gallery-placeholder" style="grid-column:1/-1;padding:60px 0;">
+                        <div class="item-gallery-placeholder-icon">${getCategoryIcon(itemData.category)}</div>
+                        <div>${escapeHtml(itemData.category || 'Item')}</div>
+                    </div>`;
+                return;
+            }
+
+            gallery.innerHTML = images.map(img => `
+                <div class="item-gallery-image" onclick="window.open('http://localhost:8080${img.imageUrl}', '_blank')">
+                    <img src="http://localhost:8080${img.imageUrl}" alt="${escapeHtml(itemData.itemName)}" loading="lazy">
+                </div>
+            `).join('');
+        }
+
+        function renderInfo() {
+            const info = document.getElementById('itemInfo');
+            const rows = [];
+
+            if (itemData.locationName) {
+                rows.push(`
+                    <div class="info-row">
+                        <div class="info-icon">📍</div>
+                        <div>
+                            <div class="info-label">Location</div>
+                            <div class="info-value">${escapeHtml(itemData.locationName)}</div>
+                        </div>
+                    </div>`);
+            }
+
+            if (itemData.category) {
+                rows.push(`
+                    <div class="info-row">
+                        <div class="info-icon">${getCategoryIcon(itemData.category)}</div>
+                        <div>
+                            <div class="info-label">Category</div>
+                            <div class="info-value">${escapeHtml(itemData.category)}</div>
+                        </div>
+                    </div>`);
+            }
+
+            const timeLabel = itemData.itemType === 'LOST' ? 'When Lost' : 'When Found';
+            const timeValue = itemData.lostOrFoundTime || itemData.createdAt;
+            if (timeValue) {
+                rows.push(`
+                    <div class="info-row">
+                        <div class="info-icon">🕐</div>
+                        <div>
+                            <div class="info-label">${timeLabel}</div>
+                            <div class="info-value">${formatDateTime(timeValue)}</div>
+                        </div>
+                    </div>`);
+            }
+
+            if (itemData.createdAt) {
+                rows.push(`
+                    <div class="info-row">
+                        <div class="info-icon">📋</div>
+                        <div>
+                            <div class="info-label">Posted</div>
+                            <div class="info-value">${formatDate(itemData.createdAt)}</div>
+                        </div>
+                    </div>`);
+            }
+
+            info.innerHTML = rows.join('');
+        }
+
+        function renderDescription() {
+            const el = document.getElementById('itemDescription');
+            el.textContent = itemData.description || 'No description provided.';
+        }
+
+        function renderCharacteristics() {
+            const card = document.getElementById('characteristicsCard');
+            const el = document.getElementById('itemCharacteristics');
+
+            if (!itemData.identifyingCharacteristics) {
+                card.style.display = 'none';
+                return;
+            }
+
+            el.innerHTML = `
+                <div style="margin-bottom:10px;">${escapeHtml(itemData.identifyingCharacteristics)}</div>
+                <div class="characteristics-hidden-note">
+                    <span>🔒</span>
+                    <span>Some identifying information is intentionally hidden to protect item ownership.</span>
+                </div>`;
+        }
+
+        function renderCondition() {
+            const card = document.getElementById('conditionCard');
+            const el = document.getElementById('itemCondition');
+
+            if (itemData.itemType !== 'FOUND' || !itemData.conditionDescription) {
+                card.style.display = 'none';
+                return;
+            }
+
+            el.textContent = itemData.conditionDescription;
+        }
+
+        function renderReporter() {
+            const el = document.getElementById('reporterSection');
+            const reporter = itemData.reporter;
+            if (!reporter) {
+                el.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;">Unknown reporter</div>';
+                return;
+            }
+
+            el.innerHTML = `
+                <div class="avatar" style="background:${auth.getAvatarColor(reporter.fullName)}">${auth.getInitials(reporter.fullName)}</div>
+                <div class="reporter-info">
+                    <div class="reporter-name">${escapeHtml(reporter.fullName)}</div>
+                    <div class="reporter-role">${escapeHtml(reporter.role || 'student')}</div>
+                </div>`;
+        }
+
+        function renderActions() {
+            const el = document.getElementById('actionButtons');
+            const buttons = [];
+
+            if (!isReporter() && itemData.itemType === 'FOUND' && itemData.status === 'ACTIVE') {
+                buttons.push(`<button class="btn btn-primary btn-block" onclick="openClaimModal()">🏷️ I Think This Is Mine</button>`);
+            }
+
+            buttons.push(`<button class="btn btn-secondary btn-block" onclick="openReportModal()">🚩 Report Listing</button>`);
+
+            el.innerHTML = buttons.join('');
+        }
+
+        async function loadMatches() {
+            try {
+                const matches = await api.getPossibleMatches(itemId);
+                const matchArr = Array.isArray(matches) ? matches : (matches.content || []);
+                if (matchArr.length === 0) return;
+
+                const section = document.getElementById('matchesSection');
+                const list = document.getElementById('matchesList');
+                section.style.display = 'block';
+
+                list.innerHTML = matchArr.map(m => `
+                    <a href="/item.html?id=${m.id}" class="match-card">
+                        <div class="match-icon">${getCategoryIcon(m.category)}</div>
+                        <div class="match-info">
+                            <div class="match-name">${escapeHtml(m.itemName)}</div>
+                            <div class="match-location">📍 ${escapeHtml(m.locationName || 'Campus')}</div>
+                        </div>
+                        <div class="match-indicator">${m.matchScore || 'Match'}</div>
+                    </a>
+                `).join('');
+            } catch (err) {
+                console.error('Load matches error:', err);
+            }
+        }
+
+        async function loadClaims() {
+            try {
+                const claims = await api.getItemClaims(itemId);
+                const claimArr = Array.isArray(claims) ? claims : (claims.content || []);
+                if (claimArr.length === 0) return;
+
+                const card = document.getElementById('claimsCard');
+                const list = document.getElementById('claimsList');
+                card.style.display = 'block';
+
+                list.innerHTML = claimArr.map(claim => `
+                    <div class="claim-card">
+                        <div class="claim-header">
+                            <div class="avatar avatar-sm" style="background:${auth.getAvatarColor(claim.claimant?.fullName || '')}">${auth.getInitials(claim.claimant?.fullName || '?')}</div>
+                            <div class="claimant-name">${escapeHtml(claim.claimant?.fullName || 'Unknown')}</div>
+                            ${getStatusBadge(claim.status)}
+                        </div>
+                        <div class="claim-message">${escapeHtml(claim.claimMessage || '')}</div>
+                        <div class="claim-actions">
+                            ${claim.status === 'PENDING' ? `
+                                <button class="btn btn-sm btn-primary" onclick="verifyOwner(${claim.id})">✓ Verify Owner</button>
+                                <button class="btn btn-sm btn-success" onclick="scheduleHandover(${claim.id})">📅 Schedule Handover</button>
+                            ` : ''}
+                            ${claim.status === 'OWNER_VERIFIED' ? `
+                                <button class="btn btn-sm btn-success" onclick="scheduleHandover(${claim.id})">📅 Schedule Handover</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Load claims error:', err);
+            }
+        }
+
+        function openClaimModal() {
+            showModal('Claim This Item',
+                `<div class="form-group">
+                    <label class="form-label">Why do you think this is your item?</label>
+                    <textarea id="claimMessage" class="form-textarea" rows="4" placeholder="Describe why you believe this item belongs to you..."></textarea>
+                </div>`,
+                `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                 <button class="btn btn-primary" onclick="submitClaim()">Submit Claim</button>`
+            );
+        }
+
+        async function submitClaim() {
+            const message = document.getElementById('claimMessage').value.trim();
+            if (!message) {
+                showToast('Please provide a reason for your claim.', 'error');
+                return;
+            }
+
+            try {
+                await api.createClaim({ itemId: parseInt(itemId), claimMessage: message });
+                closeModal();
+                showToast('Claim submitted successfully! The owner will be notified.', 'success');
+                if (isReporter() && itemData.itemType === 'FOUND') {
+                    loadClaims();
+                }
+            } catch (err) {
+                showToast(err.message || 'Failed to submit claim.', 'error');
+            }
+        }
+
+        async function verifyOwner(claimId) {
+            try {
+                await api.updateClaimStatus(claimId, { status: 'OWNER_VERIFIED' });
+                showToast('Owner verified successfully!', 'success');
+                loadClaims();
+            } catch (err) {
+                showToast(err.message || 'Failed to verify owner.', 'error');
+            }
+        }
+
+        async function scheduleHandover(claimId) {
+            try {
+                const conversation = await api.getConversations();
+                const convArr = Array.isArray(conversation) ? conversation : (conversation.content || []);
+
+                await api.createHandover({
+                    claimId: claimId,
+                    itemId: parseInt(itemId)
+                });
+                showToast('Handover scheduled! Check your messages for coordination.', 'success');
+                loadClaims();
+            } catch (err) {
+                showToast(err.message || 'Failed to schedule handover.', 'error');
+            }
+        }
+
+        function openReportModal() {
+            showModal('Report Listing',
+                `<div class="form-group">
+                    <label class="form-label">Reason for report</label>
+                    <select id="reportReason" class="form-select">
+                        <option value="">Select a reason...</option>
+                        <option value="FAKE_LISTING">Fake Listing</option>
+                        <option value="SUSPICIOUS_ACTIVITY">Suspicious Activity</option>
+                        <option value="WRONG_INFORMATION">Wrong Information</option>
+                        <option value="DUPLICATE">Duplicate Listing</option>
+                        <option value="INAPPROPRIATE_CONTENT">Inappropriate Content</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="reportDescription" class="form-textarea" rows="4" placeholder="Provide additional details..."></textarea>
+                </div>`,
+                `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                 <button class="btn btn-danger" onclick="submitReport()">Submit Report</button>`
+            );
+        }
+
+        async function submitReport() {
+            const reason = document.getElementById('reportReason').value;
+            const description = document.getElementById('reportDescription').value.trim();
+
+            if (!reason) {
+                showToast('Please select a reason.', 'error');
+                return;
+            }
+
+            try {
+                await api.createReport({
+                    itemId: parseInt(itemId),
+                    reason: reason,
+                    description: description
+                });
+                closeModal();
+                showToast('Report submitted. Thank you for helping keep the community safe.', 'success');
+            } catch (err) {
+                showToast(err.message || 'Failed to submit report.', 'error');
+            }
+        }
+
+        setInterval(loadUnreadCount, 30000);
+    </script>
+</body>
+</html>

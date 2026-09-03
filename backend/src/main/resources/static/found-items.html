@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Found Items - Lost & Found</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">Lost &amp; Found</h1>
+        <p class="logo-subtitle">AVCOE Campus</p>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar"></div>
+          <span class="user-name" id="userName"></span>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">&#9776;</button>
+        <h2 class="page-title">Found Items</h2>
+        <div class="spacer"></div>
+        <button class="notification-btn" id="notificationBtn">
+          <span class="bell-icon">&#128276;</span>
+          <span class="badge" id="unreadBadge" style="display:none;">0</span>
+        </button>
+      </header>
+
+      <section class="search-section">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Search found items...">
+          <button class="search-btn" id="searchBtn">Search</button>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label for="categoryFilter">Category</label>
+            <select id="categoryFilter">
+              <option value="">All Categories</option>
+              <option value="ELECTRONICS">Electronics</option>
+              <option value="BAGS">Bags</option>
+              <option value="BOOKS">Books</option>
+              <option value="ID_CARDS">ID Cards</option>
+              <option value="WALLETS">Wallets</option>
+              <option value="KEYS">Keys</option>
+              <option value="DOCUMENTS">Documents</option>
+              <option value="CLOTHING">Clothing</option>
+              <option value="ACCESSORIES">Accessories</option>
+              <option value="STATIONERY">Stationery</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="locationFilter">Location</label>
+            <input type="text" id="locationFilter" placeholder="Filter by location...">
+          </div>
+        </div>
+        <div class="filter-chips" id="filterChips">
+          <button class="chip active" data-category="">All</button>
+          <button class="chip" data-category="ELECTRONICS">Electronics</button>
+          <button class="chip" data-category="BAGS">Bags</button>
+          <button class="chip" data-category="BOOKS">Books</button>
+          <button class="chip" data-category="ID_CARDS">ID Cards</button>
+          <button class="chip" data-category="WALLETS">Wallets</button>
+          <button class="chip" data-category="KEYS">Keys</button>
+          <button class="chip" data-category="DOCUMENTS">Documents</button>
+          <button class="chip" data-category="CLOTHING">Clothing</button>
+          <button class="chip" data-category="ACCESSORIES">Accessories</button>
+          <button class="chip" data-category="STATIONERY">Stationery</button>
+          <button class="chip" data-category="OTHER">Other</button>
+        </div>
+      </section>
+
+      <section class="items-section">
+        <div class="items-grid" id="itemsGrid"></div>
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <p>No found items match your search.</p>
+        </div>
+      </section>
+
+      <section class="pagination-section" id="paginationSection">
+        <button class="page-btn" id="prevBtn" disabled>Previous</button>
+        <span class="page-info" id="pageInfo">Page 1 of 1</span>
+        <button class="page-btn" id="nextBtn" disabled>Next</button>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav" id="mobileNav"></nav>
+
+  <script type="module">
+    import { getItems, getUnreadCount } from './js/api.js';
+    import { auth, logout } from './js/auth.js';
+    import { escapeHtml, initSidebar, initMobileNav } from './js/utils.js';
+
+    if (!auth.requireAuth()) throw new Error('Not authenticated');
+
+    const CATEGORY_ICONS = {
+      ELECTRONICS: '&#128241;',
+      BAGS: '&#128092;',
+      BOOKS: '&#128218;',
+      ID_CARDS: '&#128100;',
+      WALLETS: '&#128091;',
+      KEYS: '&#128273;',
+      DOCUMENTS: '&#128196;',
+      CLOTHING: '&#128085;',
+      ACCESSORIES: '&#128082;',
+      STATIONERY: '&#9998;',
+      OTHER: '&#10067;'
+    };
+
+    let currentPage = 1;
+    const PAGE_SIZE = 12;
+    let totalPages = 1;
+    let currentCategory = '';
+    let currentSearch = '';
+    let currentLocation = '';
+
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    const filterChips = document.getElementById('filterChips');
+    const itemsGrid = document.getElementById('itemsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const paginationSection = document.getElementById('paginationSection');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageInfo = document.getElementById('pageInfo');
+    const notificationBtn = document.getElementById('notificationBtn');
+    const unreadBadge = document.getElementById('unreadBadge');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    initSidebar();
+    initMobileNav();
+
+    function renderItems(items) {
+      itemsGrid.innerHTML = '';
+      if (!items || items.length === 0) {
+        emptyState.style.display = 'block';
+        paginationSection.style.display = 'none';
+        return;
+      }
+      emptyState.style.display = 'none';
+      paginationSection.style.display = 'flex';
+
+      items.forEach(item => {
+        const card = document.createElement('a');
+        card.className = 'item-card';
+        card.href = `/item.html?id=${item.id}`;
+
+        let imageHtml;
+        if (item.images && item.images.length > 0 && item.images[0].imageUrl) {
+          imageHtml = `<img src="http://localhost:8080${item.images[0].imageUrl}" alt="${escapeHtml(item.title)}" class="item-image">`;
+        } else {
+          const icon = CATEGORY_ICONS[item.category] || '&#10067;';
+          imageHtml = `<div class="item-image-placeholder">${icon}</div>`;
+        }
+
+        const badgeClass = item.status === 'FOUND' ? 'badge-found' : 'badge-lost';
+        const badgeText = item.status === 'FOUND' ? 'FOUND' : 'LOST';
+
+        card.innerHTML = `
+          ${imageHtml}
+          <div class="item-details">
+            <span class="item-badge ${badgeClass}">${badgeText}</span>
+            <h3 class="item-title">${escapeHtml(item.title)}</h3>
+            <p class="item-description">${escapeHtml(item.description || '')}</p>
+            <div class="item-meta">
+              <span class="item-location">&#128205; ${escapeHtml(item.location || 'Unknown')}</span>
+              <span class="item-time">${escapeHtml(item.createdAt || '')}</span>
+            </div>
+          </div>
+        `;
+        itemsGrid.appendChild(card);
+      });
+    }
+
+    function updatePagination() {
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    async function loadItems() {
+      try {
+        const params = {
+          type: 'FOUND',
+          page: currentPage,
+          size: PAGE_SIZE
+        };
+        if (currentSearch) params.search = currentSearch;
+        if (currentCategory) params.category = currentCategory;
+
+        const data = await getItems(params);
+        const items = data.content || data.items || data || [];
+        totalPages = data.totalPages || Math.ceil((data.totalElements || items.length) / PAGE_SIZE) || 1;
+
+        renderItems(items);
+        updatePagination();
+      } catch (err) {
+        console.error('Failed to load items:', err);
+        itemsGrid.innerHTML = '<p class="error-msg">Failed to load items.</p>';
+      }
+    }
+
+    async function loadUnreadCount() {
+      try {
+        const data = await getUnreadCount();
+        const count = data.count || 0;
+        unreadBadge.textContent = count;
+        unreadBadge.style.display = count > 0 ? 'inline' : 'none';
+      } catch (err) {
+        console.error('Failed to load unread count:', err);
+      }
+    }
+
+    searchBtn.addEventListener('click', () => {
+      currentSearch = searchInput.value.trim();
+      currentPage = 1;
+      loadItems();
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        loadItems();
+      }
+    });
+
+    categoryFilter.addEventListener('change', () => {
+      currentCategory = categoryFilter.value;
+      currentPage = 1;
+      document.querySelectorAll('.filter-chips .chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.category === currentCategory);
+      });
+      loadItems();
+    });
+
+    locationFilter.addEventListener('input', () => {
+      currentLocation = locationFilter.value.trim();
+    });
+
+    filterChips.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      currentCategory = chip.dataset.category || '';
+      categoryFilter.value = currentCategory;
+      document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentPage = 1;
+      loadItems();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        loadItems();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadItems();
+      }
+    });
+
+    notificationBtn.addEventListener('click', () => {
+      window.location.href = '/notifications.html';
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      logout();
+      window.location.href = '/login.html';
+    });
+
+    loadItems();
+    loadUnreadCount();
+    setInterval(loadUnreadCount, 30000);
+  </script>
+</body>
+</html>

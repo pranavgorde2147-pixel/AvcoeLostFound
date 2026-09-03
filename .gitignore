@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+target/
+**/target/
+
+uploads/
+**/uploads/
+
+*.log
+
+.idea/
+.vscode/
+.DS_Store
+
+

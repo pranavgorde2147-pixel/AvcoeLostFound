@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Found Item — AVCOE Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        .form-step { display: none; }
+        .form-step.active { display: block; }
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 32px;
+            padding: 0 20px;
+        }
+        .step-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all var(--transition-normal);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .step-dot.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+        }
+        .step-dot.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border-color);
+            transition: background var(--transition-normal);
+        }
+        .step-line.completed {
+            background: var(--success);
+        }
+        .step-label {
+            position: absolute;
+            top: 44px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .step-dot.active + .step-label,
+        .step-dot.completed + .step-label {
+            color: var(--text-secondary);
+        }
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-section-title .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: rgba(99, 102, 241, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .required-star {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+        .form-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            color: var(--text-muted);
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .upload-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .upload-zone-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+        .upload-zone-text {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .upload-zone-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .preview-item {
+            position: relative;
+            width: 110px;
+            height: 110px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-full);
+            background: var(--danger);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: transform var(--transition-fast);
+        }
+        .preview-remove:hover {
+            transform: scale(1.15);
+        }
+        .preview-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        .verification-box {
+            background: rgba(251, 191, 36, 0.08);
+            border: 1px solid rgba(251, 191, 36, 0.25);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .verification-box h4 {
+            color: #fbbf24;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .verification-box p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .verification-box ul {
+            margin: 8px 0;
+            padding-left: 18px;
+        }
+        .verification-box li {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+            .step-label { display: none; }
+            .step-indicator { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard.html" class="sidebar-logo">
+                    <span class="sidebar-logo-icon">🎒</span>
+                    <div>
+                        <div>Lost & Found</div>
+                        <div class="sidebar-subtitle">AVCOE Campus</div>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav"></nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar"></div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-name"></div>
+                        <div class="sidebar-user-role"></div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="auth.logout()" title="Logout" style="padding:6px;">⏻</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="top-bar-title">Report Found Item</div>
+                <div class="top-bar-spacer"></div>
+                <div class="top-bar-actions">
+                    <a href="/notifications.html" class="notification-btn" title="Notifications">🔔<span class="notification-badge" style="display:none;">0</span></a>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="animate-fade-in-up" style="margin-bottom:28px;">
+                    <button class="back-btn" onclick="history.back()" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:0.9rem;cursor:pointer;margin-bottom:12px;transition:color var(--transition-fast);">← Back</button>
+                    <h1 style="margin-bottom:8px;">🔍 Report Found Item</h1>
+                    <p style="color:var(--text-muted);">Thank you for helping return a lost item! Provide details so the owner can identify and claim it.</p>
+                </div>
+
+                <div class="card" style="max-width:720px;">
+                    <div class="step-indicator">
+                        <div class="step-dot active" data-step="1">1<span class="step-label">Details</span></div>
+                        <div class="step-line"></div>
+                        <div class="step-dot" data-step="2">2<span class="step-label">Location</span></div>
+                        <div class="step-line"></div>
+                        <div class="step-dot" data-step="3">3<span class="step-label">Verify</span></div>
+                        <div class="step-line"></div>
+                        <div class="step-dot" data-step="4">4<span class="step-label">Photos</span></div>
+                    </div>
+
+                    <form id="foundForm" novalidate>
+                        <!-- Step 1: Item Details -->
+                        <div class="form-step active" data-step="1">
+                            <div class="form-section-title">
+                                <span class="icon">📋</span> Item Details
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Item Name <span class="required-star">*</span></label>
+                                <input type="text" id="itemName" class="form-input" placeholder="e.g., Black Backpack, iPhone 14" required maxlength="200">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Category <span class="required-star">*</span></label>
+                                <select id="category" class="form-select" required>
+                                    <option value="">Select a category</option>
+                                    <option value="ELECTRONICS">📱 Electronics</option>
+                                    <option value="BAGS">🎒 Bags</option>
+                                    <option value="BOOKS">📚 Books</option>
+                                    <option value="ID_CARDS">🪪 ID Cards</option>
+                                    <option value="WALLETS">👛 Wallets</option>
+                                    <option value="KEYS">🔑 Keys</option>
+                                    <option value="DOCUMENTS">📄 Documents</option>
+                                    <option value="CLOTHING">👕 Clothing</option>
+                                    <option value="ACCESSORIES">⌚ Accessories</option>
+                                    <option value="STATIONERY">✏️ Stationery</option>
+                                    <option value="OTHER">📦 Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Description</label>
+                                <textarea id="description" class="form-textarea" rows="4" placeholder="Describe the item — brand, color, size, model, etc." maxlength="2000"></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Date Found <span class="required-star">*</span></label>
+                                    <input type="date" id="dateOfEvent" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Approximate Time</label>
+                                    <input type="time" id="approximateTime" class="form-input">
+                                </div>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary" onclick="goToStep(2)">Next: Location →</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Location -->
+                        <div class="form-step" data-step="2">
+                            <div class="form-section-title">
+                                <span class="icon">📍</span> Location
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Location Found <span class="required-star">*</span></label>
+                                <select id="locationId" class="form-select" required>
+                                    <option value="">Select a location</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Location Description</label>
+                                <input type="text" id="locationDescription" class="form-input" placeholder="e.g., Near the library entrance, under the stairwell" maxlength="200">
+                                <div class="form-hint">Add specifics that help pinpoint where the item was found.</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Current Item Location <span class="required-star">*</span></label>
+                                <input type="text" id="currentItemLocation" class="form-input" placeholder="e.g., Kept at Security Desk, Room 301, Dept. Office" maxlength="200" required>
+                                <div class="form-hint">Where is this item currently kept? This helps the owner know where to collect it.</div>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+                                <button type="button" class="btn btn-primary" onclick="goToStep(3)">Next: Verification →</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Verification -->
+                        <div class="form-step" data-step="3">
+                            <div class="form-section-title">
+                                <span class="icon">🔐</span> Verification
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Verification Question <span class="required-star">*</span></label>
+                                <input type="text" id="verificationQuestion" class="form-input" placeholder="e.g., What is inside the front pocket?" required maxlength="200">
+                                <div class="form-hint">Create a question only the true owner can answer. This will be sent automatically to anyone who claims this item.</div>
+                            </div>
+
+                            <div class="verification-box">
+                                <h4>🛡️ How Verification Works</h4>
+                                <p>When someone claims this item, they will be asked your verification question. Only the true owner will know the answer.</p>
+                                <p style="margin-top:8px;"><strong>Good examples:</strong></p>
+                                <ul>
+                                    <li>"What color is the inside lining of the bag?"</li>
+                                    <li>"What sticker is on the back of the laptop?"</li>
+                                    <li>"What is written on the first page of the notebook?"</li>
+                                    <li>"How many compartments does the wallet have?"</li>
+                                </ul>
+                                <p style="margin-top:8px;"><strong>Tips:</strong></p>
+                                <ul>
+                                    <li>Be specific — the question should have a clear, verifiable answer</li>
+                                    <li>Don't include the answer in the question itself</li>
+                                    <li>Avoid questions that could be guessed easily</li>
+                                </ul>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
+                                <button type="button" class="btn btn-primary" onclick="goToStep(4)">Next: Photos →</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Photos -->
+                        <div class="form-step" data-step="4">
+                            <div class="form-section-title">
+                                <span class="icon">📷</span> Photographs
+                            </div>
+
+                            <div class="form-group">
+                                <div class="upload-zone" id="uploadZone">
+                                    <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/webp" multiple>
+                                    <div class="upload-zone-icon">🖼️</div>
+                                    <div class="upload-zone-text">Click or drag images here to upload</div>
+                                    <div class="upload-zone-hint">JPEG, PNG or WebP — Max 5 images, 10MB each</div>
+                                </div>
+                                <div id="previewContainer"></div>
+                                <div class="preview-count" id="imageCount"></div>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary" onclick="goToStep(3)">← Back</button>
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <span id="submitText">🔍 Report Found Item</span>
+                                    <span id="submitSpinner" style="display:none;"><span class="spinner"></span></span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <nav class="mobile-nav"><div class="mobile-nav-items"></div></nav>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        if (!auth.requireAuth()) throw new Error('Not authenticated');
+        initSidebar();
+        initMobileNav();
+
+        let currentStep = 1;
+        let selectedFiles = [];
+        const MAX_IMAGES = 5;
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+        const dateInput = document.getElementById('dateOfEvent');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('max', today);
+        dateInput.value = today;
+
+        async function loadLocations() {
+            try {
+                const locations = await api.getLocations();
+                const locArr = Array.isArray(locations) ? locations : (locations.content || []);
+                const select = document.getElementById('locationId');
+                locArr.forEach(loc => {
+                    const opt = document.createElement('option');
+                    opt.value = loc.id || loc;
+                    opt.textContent = loc.name || loc;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Failed to load locations:', err);
+                showToast('Failed to load locations.', 'error');
+            }
+        }
+
+        function goToStep(step) {
+            if (step > currentStep && !validateStep(currentStep)) return;
+
+            document.querySelector(`.form-step[data-step="${currentStep}"]`).classList.remove('active');
+            document.querySelector(`.form-step[data-step="${step}"]`).classList.add('active');
+
+            document.querySelectorAll('.step-dot').forEach(dot => {
+                const s = parseInt(dot.dataset.step);
+                dot.classList.remove('active', 'completed');
+                if (s < step) dot.classList.add('completed');
+                else if (s === step) dot.classList.add('active');
+            });
+
+            document.querySelectorAll('.step-line').forEach((line, i) => {
+                line.classList.toggle('completed', i < step - 1);
+            });
+
+            currentStep = step;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateStep(step) {
+            if (step === 1) {
+                const name = document.getElementById('itemName').value.trim();
+                const category = document.getElementById('category').value;
+                const date = document.getElementById('dateOfEvent').value;
+
+                if (!name) {
+                    showToast('Please enter an item name.', 'error');
+                    document.getElementById('itemName').focus();
+                    return false;
+                }
+                if (!category) {
+                    showToast('Please select a category.', 'error');
+                    document.getElementById('category').focus();
+                    return false;
+                }
+                if (!date) {
+                    showToast('Please select the date found.', 'error');
+                    document.getElementById('dateOfEvent').focus();
+                    return false;
+                }
+            }
+            if (step === 2) {
+                const locationId = document.getElementById('locationId').value;
+                const currentItemLocation = document.getElementById('currentItemLocation').value.trim();
+
+                if (!locationId) {
+                    showToast('Please select a location.', 'error');
+                    document.getElementById('locationId').focus();
+                    return false;
+                }
+                if (!currentItemLocation) {
+                    showToast('Please enter where the item is currently kept.', 'error');
+                    document.getElementById('currentItemLocation').focus();
+                    return false;
+                }
+            }
+            if (step === 3) {
+                const verificationQuestion = document.getElementById('verificationQuestion').value.trim();
+
+                if (!verificationQuestion) {
+                    showToast('Please create a verification question.', 'error');
+                    document.getElementById('verificationQuestion').focus();
+                    return false;
+                }
+                if (verificationQuestion.length < 10) {
+                    showToast('Verification question is too short. Please provide more detail.', 'error');
+                    document.getElementById('verificationQuestion').focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function formatPayload() {
+            const dateVal = document.getElementById('dateOfEvent').value;
+            const timeVal = document.getElementById('approximateTime').value;
+            let dateOfEvent = null;
+            if (dateVal) {
+                dateOfEvent = timeVal ? `${dateVal}T${timeVal}:00` : `${dateVal}T00:00:00`;
+            }
+
+            return {
+                itemName: document.getElementById('itemName').value.trim(),
+                itemType: 'FOUND',
+                category: document.getElementById('category').value,
+                description: document.getElementById('description').value.trim() || null,
+                dateOfEvent: dateOfEvent,
+                approximateTime: timeVal || null,
+                locationId: parseInt(document.getElementById('locationId').value),
+                locationDescription: document.getElementById('locationDescription').value.trim() || null,
+                currentItemLocation: document.getElementById('currentItemLocation').value.trim() || null,
+                verificationQuestion: document.getElementById('verificationQuestion').value.trim()
+            };
+        }
+
+        document.getElementById('foundForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validateStep(currentStep)) return;
+
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+
+            submitBtn.disabled = true;
+            submitText.style.display = 'none';
+            submitSpinner.style.display = 'inline-flex';
+
+            try {
+                const payload = formatPayload();
+                const item = await api.createItem(payload);
+
+                if (selectedFiles.length > 0) {
+                    try {
+                        await api.uploadImages(item.id, selectedFiles);
+                    } catch (imgErr) {
+                        console.error('Image upload failed:', imgErr);
+                        showToast('Item created but images failed to upload. You can add them later.', 'warning');
+                    }
+                }
+
+                showToast('Found item reported successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = `/item.html?id=${item.id}`;
+                }, 800);
+            } catch (err) {
+                console.error('Submit error:', err);
+                showToast(err.message || 'Failed to report found item. Please try again.', 'error');
+                submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                submitSpinner.style.display = 'none';
+            }
+        });
+
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+            fileInput.value = '';
+        });
+
+        function handleFiles(files) {
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+            for (const file of files) {
+                if (selectedFiles.length >= MAX_IMAGES) {
+                    showToast(`Maximum ${MAX_IMAGES} images allowed.`, 'warning');
+                    break;
+                }
+                if (!validTypes.includes(file.type)) {
+                    showToast(`"${file.name}" is not a supported image type.`, 'error');
+                    continue;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    showToast(`"${file.name}" exceeds 10MB limit.`, 'error');
+                    continue;
+                }
+                selectedFiles.push(file);
+            }
+            renderPreviews();
+        }
+
+        function renderPreviews() {
+            const container = document.getElementById('previewContainer');
+            const countEl = document.getElementById('imageCount');
+
+            if (selectedFiles.length === 0) {
+                container.innerHTML = '';
+                countEl.textContent = '';
+                return;
+            }
+
+            countEl.textContent = `${selectedFiles.length} / ${MAX_IMAGES} images selected`;
+
+            container.innerHTML = selectedFiles.map((file, idx) => {
+                const url = URL.createObjectURL(file);
+                return `
+                    <div class="preview-grid">
+                        <div class="preview-item">
+                            <img src="${url}" alt="${escapeHtml(file.name)}">
+                            <button type="button" class="preview-remove" onclick="removeImage(${idx})">✕</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            renderPreviews();
+        }
+
+        loadLocations();
+        setInterval(loadUnreadCount, 30000);
+    </script>
+</body>
+</html>
