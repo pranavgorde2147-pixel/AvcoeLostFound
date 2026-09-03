@@ -442,8 +442,8 @@
             }
 
             gallery.innerHTML = images.map(img => `
-                <div class="item-gallery-image" onclick="window.open('http://localhost:8080${img.imageUrl}', '_blank')">
-                    <img src="http://localhost:8080${img.imageUrl}" alt="${escapeHtml(itemData.itemName)}" loading="lazy">
+                <div class="item-gallery-image" onclick="window.open('${img.imageUrl}', '_blank')">
+                    <img src="${img.imageUrl}" alt="${escapeHtml(itemData.itemName)}" loading="lazy">
                 </div>
             `).join('');
         }

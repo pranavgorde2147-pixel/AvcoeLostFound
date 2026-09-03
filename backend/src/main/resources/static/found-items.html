@@ -160,7 +160,7 @@
 
         let imageHtml;
         if (item.images && item.images.length > 0 && item.images[0].imageUrl) {
-          imageHtml = `<img src="http://localhost:8080${item.images[0].imageUrl}" alt="${escapeHtml(item.title)}" class="item-image">`;
+          imageHtml = `<img src="${item.images[0].imageUrl}" alt="${escapeHtml(item.title)}" class="item-image">`;
         } else {
           const icon = CATEGORY_ICONS[item.category] || '&#10067;';
           imageHtml = `<div class="item-image-placeholder">${icon}</div>`;

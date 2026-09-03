@@ -492,7 +492,7 @@
                 <a href="/item.html?id=${item.id}" class="item-card hover-lift" style="text-decoration:none;color:inherit;">
                     <div class="item-card-image">
                         ${item.images && item.images.length > 0
-                            ? `<img src="http://localhost:8080${item.images[0].imageUrl}" alt="${escapeHtml(item.itemName)}">`
+                            ? `<img src="${item.images[0].imageUrl}" alt="${escapeHtml(item.itemName)}">`
                             : `<span style="font-size:3rem;">${getCategoryIcon(item.category)}</span>`
                         }
                     </div>

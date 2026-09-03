@@ -1,8 +1,13 @@
 #!/bin/bash
 # AVCOE Lost & Found - Start Script
 
+set -e
+
+PORT="${PORT:-8080}"
+HOST="${SERVER_ADDRESS:-0.0.0.0}"
+
 echo "Starting AVCOE Lost & Found Platform..."
-echo "Open http://localhost:8080 in your browser"
+echo "Open http://${HOST}:${PORT} in your browser"
 echo ""
 echo "Demo Accounts:"
 echo "  finder@example.com   / password123"
@@ -13,4 +18,4 @@ echo ""
 echo "Press Ctrl+C to stop the server"
 echo "============================================"
 
-java -jar "$(dirname "$0")/backend/target/lostfound-1.0.0.jar"
+java -jar "$(dirname "$0")/backend/target/lostfound-1.0.0.jar" --server.port="${PORT}" --server.address="${HOST}"
