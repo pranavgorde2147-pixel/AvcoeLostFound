@@ -1,11 +1,11 @@
 package com.avcoe.lostfound.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class ClaimRequest {
-    @NotBlank
+    @NotNull
     private Long itemId;
     private String claimMessage;
 }
