@@ -9,6 +9,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
+
 @Controller
 public class WebSocketChatController {
 
@@ -21,7 +23,11 @@ public class WebSocketChatController {
     @MessageMapping("/chat/{conversationId}")
     @SendTo("/topic/conversation/{conversationId}")
     public MessageResponse sendMessage(@DestinationVariable Long conversationId,
-                                       @Payload SendMessageRequest request) {
-        return chatService.sendMessage(conversationId, request);
+                                       @Payload SendMessageRequest request,
+                                       Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Authentication required");
+        }
+        return chatService.sendMessage(conversationId, request, principal.getName());
     }
 }

@@ -53,6 +53,10 @@ public class ChatService {
             response.setTitle(conv.getTitle());
             response.setItemId(conv.getItem().getId());
             response.setItemName(conv.getItem().getItemName());
+                conv.getParticipants().stream()
+                    .filter(participant -> !participant.getId().equals(user.getId()))
+                    .findFirst()
+                    .ifPresent(participant -> response.setOtherUserName(participant.getFullName()));
 
             List<ParticipantResponse> participants = conv.getParticipants().stream().map(p -> {
                 ParticipantResponse pr = new ParticipantResponse();
@@ -72,6 +76,9 @@ public class ChatService {
             }
 
             response.setLastMessageAt(conv.getLastMessageAt());
+                response.setLastMessageTime(conv.getLastMessageAt());
+                response.setUnreadCount((int) messageRepository.countByConversationIdAndReadFalseAndSenderIdNot(
+                    conv.getId(), user.getId()));
             response.setCreatedAt(conv.getCreatedAt());
             return response;
         }).collect(Collectors.toList());
@@ -105,6 +112,16 @@ public class ChatService {
 
     public MessageResponse sendMessage(Long conversationId, SendMessageRequest request) {
         User sender = getCurrentUser();
+        return sendMessage(conversationId, request, sender);
+    }
+
+    public MessageResponse sendMessage(Long conversationId, SendMessageRequest request, String senderEmail) {
+        User sender = userRepository.findByEmail(senderEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return sendMessage(conversationId, request, sender);
+    }
+
+    private MessageResponse sendMessage(Long conversationId, SendMessageRequest request, User sender) {
 
         if (!conversationRepository.isParticipant(conversationId, sender.getId())) {
             throw new IllegalArgumentException("Access denied");
@@ -158,6 +175,10 @@ public class ChatService {
 
     public void sendVerificationQuestion(Long conversationId, String question) {
         User sender = getCurrentUser();
+
+        if (!conversationRepository.isParticipant(conversationId, sender.getId())) {
+            throw new IllegalArgumentException("Access denied");
+        }
 
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
