@@ -45,12 +45,6 @@
         .auth-subtitle { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 28px; }
         .auth-footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--text-muted); }
         .auth-footer a { color: var(--accent-primary); }
-        .demo-accounts { margin-top: 24px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-color); }
-        .demo-accounts h4 { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .demo-account { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.8rem; }
-        .demo-account-email { color: var(--text-secondary); }
-        .demo-fill { color: var(--accent-primary); cursor: pointer; background: none; border: none; font-size: 0.8rem; }
-        .demo-fill:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -82,21 +76,6 @@
                 Don't have an account? <a href="/register.html">Create one</a>
             </div>
 
-            <div class="demo-accounts">
-                <h4>Demo Accounts</h4>
-                <div class="demo-account">
-                    <span class="demo-account-email">finder@example.com</span>
-                    <button class="demo-fill" onclick="fillDemo('finder@example.com','password123')">Fill</button>
-                </div>
-                <div class="demo-account">
-                    <span class="demo-account-email">claimant1@example.com</span>
-                    <button class="demo-fill" onclick="fillDemo('claimant1@example.com','password123')">Fill</button>
-                </div>
-                <div class="demo-account">
-                    <span class="demo-account-email">admin@example.com</span>
-                    <button class="demo-fill" onclick="fillDemo('admin@example.com','admin123')">Fill</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -105,11 +84,6 @@
     <script src="js/utils.js"></script>
     <script>
         if (auth.isLoggedIn()) window.location.href = '/dashboard.html';
-
-        function fillDemo(email, password) {
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = password;
-        }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();

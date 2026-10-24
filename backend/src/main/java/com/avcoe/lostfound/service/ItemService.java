@@ -78,41 +78,51 @@ public class ItemService {
     }
 
     public PaginatedResponse<ItemResponse> getItems(String type, String category, String status,
-                                                     String search, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        Page<Item> itemPage;
-
-        if (search != null && !search.isEmpty()) {
-            if (type != null && !type.isEmpty()) {
-                Item.ItemType itemType = Item.ItemType.valueOf(type.toUpperCase());
-                itemPage = itemRepository.searchActiveItemsByType(search, itemType, pageable);
-            } else {
-                itemPage = itemRepository.searchActiveItems(search, pageable);
-            }
-        } else if (type != null && !type.isEmpty()) {
-            Item.ItemType itemType = Item.ItemType.valueOf(type.toUpperCase());
-            if (status != null && !status.isEmpty()) {
-                Item.ItemStatus itemStatus = Item.ItemStatus.valueOf(status.toUpperCase());
-                itemPage = itemRepository.findByItemTypeAndStatus(itemType, itemStatus, pageable);
-            } else {
-                itemPage = itemRepository.findByItemType(itemType, pageable);
-            }
-        } else if (status != null && !status.isEmpty()) {
-            Item.ItemStatus itemStatus = Item.ItemStatus.valueOf(status.toUpperCase());
-            itemPage = itemRepository.findByStatus(itemStatus, pageable);
-        } else if (category != null && !category.isEmpty()) {
-            Item.ItemCategory itemCategory = Item.ItemCategory.valueOf(category.toUpperCase());
-            itemPage = itemRepository.findByCategory(itemCategory, pageable);
-        } else {
-            itemPage = itemRepository.findAll(pageable);
+                                                     String search, String location, int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Page must be zero or greater");
         }
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException("Page size must be between 1 and 100");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Item.ItemType itemType = parseFilter(type, Item.ItemType.class);
+        Item.ItemCategory itemCategory = parseFilter(category, Item.ItemCategory.class);
+        Item.ItemStatus itemStatus = parseFilter(status, Item.ItemStatus.class);
+
+        Page<Item> itemPage = itemRepository.findMatchingItems(
+                itemType,
+                itemCategory,
+                itemStatus != null ? itemStatus : Item.ItemStatus.ACTIVE,
+                normalizeFilter(search),
+                normalizeFilter(location),
+                pageable);
 
         List<ItemResponse> content = itemPage.getContent().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
         return PaginatedResponse.of(content, page, size, itemPage.getTotalElements());
+    }
+
+    private <T extends Enum<T>> T parseFilter(String value, Class<T> enumType) {
+        String normalized = normalizeFilter(value);
+        if (normalized == null) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumType, normalized.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid " + enumType.getSimpleName() + " filter: " + value);
+        }
+    }
+
+    private String normalizeFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     public List<ItemResponse> getMyItems(String type) {

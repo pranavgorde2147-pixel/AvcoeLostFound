@@ -10,6 +10,27 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
+    @Query("""
+           SELECT i FROM Item i
+           LEFT JOIN i.location location
+           WHERE (:type IS NULL OR i.itemType = :type)
+             AND (:category IS NULL OR i.category = :category)
+             AND (:status IS NULL OR i.status = :status)
+             AND (:search IS NULL OR
+                  LOWER(i.itemName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                  LOWER(COALESCE(i.description, '')) LIKE LOWER(CONCAT('%', :search, '%')))
+             AND (:location IS NULL OR
+                  LOWER(COALESCE(location.name, i.locationDescription, '')) LIKE
+                  LOWER(CONCAT('%', :location, '%')))
+           """)
+    Page<Item> findMatchingItems(
+            @Param("type") Item.ItemType type,
+            @Param("category") Item.ItemCategory category,
+            @Param("status") Item.ItemStatus status,
+            @Param("search") String search,
+            @Param("location") String location,
+            Pageable pageable);
+
     Page<Item> findByItemTypeAndStatus(Item.ItemType itemType, Item.ItemStatus status, Pageable pageable);
     Page<Item> findByReporter(User reporter, Pageable pageable);
     Page<Item> findByItemType(Item.ItemType itemType, Pageable pageable);

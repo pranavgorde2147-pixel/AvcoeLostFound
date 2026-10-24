@@ -2,6 +2,7 @@ package com.avcoe.lostfound.config;
 
 import com.avcoe.lostfound.entity.*;
 import com.avcoe.lostfound.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -20,11 +21,19 @@ public class DataSeeder implements CommandLineRunner {
     private final MessageRepository messageRepository;
     private final NotificationRepository notificationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final boolean seedDemoData;
+    private final String initialAdminEmail;
+    private final String initialAdminPassword;
+    private final String initialAdminName;
 
     public DataSeeder(UserRepository userRepository, CampusLocationRepository locationRepository,
                       ItemRepository itemRepository, ClaimRepository claimRepository,
                       ConversationRepository conversationRepository, MessageRepository messageRepository,
-                      NotificationRepository notificationRepository, PasswordEncoder passwordEncoder) {
+                      NotificationRepository notificationRepository, PasswordEncoder passwordEncoder,
+                      @Value("${app.seed-demo-data:true}") boolean seedDemoData,
+                      @Value("${app.initial-admin-email:}") String initialAdminEmail,
+                      @Value("${app.initial-admin-password:}") String initialAdminPassword,
+                      @Value("${app.initial-admin-name:AVCOE Administrator}") String initialAdminName) {
         this.userRepository = userRepository;
         this.locationRepository = locationRepository;
         this.itemRepository = itemRepository;
@@ -33,11 +42,17 @@ public class DataSeeder implements CommandLineRunner {
         this.messageRepository = messageRepository;
         this.notificationRepository = notificationRepository;
         this.passwordEncoder = passwordEncoder;
+        this.seedDemoData = seedDemoData;
+        this.initialAdminEmail = initialAdminEmail;
+        this.initialAdminPassword = initialAdminPassword;
+        this.initialAdminName = initialAdminName;
     }
 
     @Override
     public void run(String... args) {
-        if (userRepository.count() > 0) return;
+        List<CampusLocation> locations = seedLocations();
+        seedInitialAdmin();
+        if (!seedDemoData || userRepository.count() > 0) return;
 
         // Create users
         User finder = User.builder()
@@ -92,19 +107,6 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .build();
         faculty = userRepository.save(faculty);
-
-        // Create locations
-        List<CampusLocation> locations = new ArrayList<>();
-        String[] locationNames = {
-            "Main Gate", "Library", "Canteen", "Academic Block", "Computer Lab",
-            "Electronics Lab", "Mechanical Lab", "Hostel", "Sports Ground",
-            "Auditorium", "Parking", "Department Office", "Seminar Hall",
-            "Staff Room", "Placement Cell"
-        };
-        for (String name : locationNames) {
-            CampusLocation loc = CampusLocation.builder().name(name).active(true).build();
-            locations.add(locationRepository.save(loc));
-        }
 
         // Create found items
         Item backpack = Item.builder()
@@ -273,5 +275,46 @@ public class DataSeeder implements CommandLineRunner {
         System.out.println("  admin@example.com / admin123");
         System.out.println("  faculty@example.com / password123");
         System.out.println("========================");
+    }
+
+    private void seedInitialAdmin() {
+        if (initialAdminEmail.isBlank() && initialAdminPassword.isBlank()) return;
+        if (initialAdminEmail.isBlank() || initialAdminPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "Both APP_INITIAL_ADMIN_EMAIL and APP_INITIAL_ADMIN_PASSWORD must be configured");
+        }
+        if (initialAdminPassword.length() < 12) {
+            throw new IllegalStateException("APP_INITIAL_ADMIN_PASSWORD must be at least 12 characters");
+        }
+
+        String email = initialAdminEmail.trim().toLowerCase(Locale.ROOT);
+        if (userRepository.existsByEmail(email)) return;
+
+        userRepository.save(User.builder()
+                .email(email)
+                .password(passwordEncoder.encode(initialAdminPassword))
+                .fullName(initialAdminName.isBlank() ? "AVCOE Administrator" : initialAdminName.trim())
+                .role(User.Role.ADMIN)
+                .enabled(true)
+                .build());
+    }
+
+    private List<CampusLocation> seedLocations() {
+        String[] locationNames = {
+            "Main Gate", "Library", "Canteen", "Academic Block", "Computer Lab",
+            "Electronics Lab", "Mechanical Lab", "Hostel", "Sports Ground",
+            "Auditorium", "Parking", "Department Office", "Seminar Hall",
+            "Staff Room", "Placement Cell"
+        };
+        List<CampusLocation> locations = new ArrayList<>();
+        for (String name : locationNames) {
+            CampusLocation location = locationRepository.findByName(name);
+            if (location == null) {
+                location = locationRepository.save(
+                        CampusLocation.builder().name(name).active(true).build());
+            }
+            locations.add(location);
+        }
+        return locations;
     }
 }

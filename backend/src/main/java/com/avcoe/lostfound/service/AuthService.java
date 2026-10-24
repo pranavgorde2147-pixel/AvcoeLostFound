@@ -31,18 +31,11 @@ public class AuthService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        User.Role role = User.Role.STUDENT;
-        if (request.getRole() != null) {
-            try {
-                role = User.Role.valueOf(request.getRole().toUpperCase());
-            } catch (IllegalArgumentException ignored) {}
-        }
-
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role(role)
+                .role(User.Role.STUDENT)
                 .phone(request.getPhone())
                 .department(request.getDepartment())
                 .rollNumber(request.getRollNumber())

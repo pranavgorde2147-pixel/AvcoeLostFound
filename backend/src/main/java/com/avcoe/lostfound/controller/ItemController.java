@@ -45,9 +45,11 @@ public class ItemController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String location,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
-        PaginatedResponse<ItemResponse> response = itemService.getItems(type, category, status, search, page, size);
+        PaginatedResponse<ItemResponse> response =
+                itemService.getItems(type, category, status, search, location, page, size);
         return ResponseEntity.ok(response);
     }
 

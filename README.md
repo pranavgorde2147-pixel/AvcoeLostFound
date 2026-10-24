@@ -83,8 +83,9 @@ mvn package -DskipTests
 java -jar target/lostfound-1.0.0.jar
 ```
 
-## Demo Accounts
+## Local Demo Accounts
 
+The development setup seeds demo accounts and sample data. The Render deployment disables demo account seeding.
 | Email | Password | Role |
 |-------|----------|------|
 | finder@example.com | password123 | STUDENT (Rahul Patil) |
@@ -200,7 +201,20 @@ The application uses 14 database tables:
 - Input sanitization
 - CORS configuration
 
-## Deployment
+## Deploy to Render
+
+The repository includes a Render Blueprint in `render.yaml`. It builds the Docker image, provisions PostgreSQL, stores uploaded images on a persistent disk, disables demo accounts and the H2 console, and generates a JWT signing secret. These resources use paid Render plans so data and uploads survive restarts; review Render's current pricing before applying the Blueprint.
+
+1. Push this repository to GitHub.
+2. In the [Render Dashboard](https://dashboard.render.com), select **New → Blueprint** and connect this GitHub repository.
+3. Review the services and charges shown from `render.yaml`, then apply the Blueprint.
+4. In the web service's Environment settings, set `APP_INITIAL_ADMIN_EMAIL` and `APP_INITIAL_ADMIN_PASSWORD` to create the first administrator. Use a password with at least 12 characters. The account is created on startup if it does not already exist.
+5. Wait for the deploy to finish, open the generated `onrender.com` URL, and register a regular account.
+6. Keep database credentials and signing secrets in Render environment settings. Do not commit production secrets.
+
+The Render service uses PostgreSQL and stores uploads under `/app/uploads` on its persistent disk. Local development continues to use H2 and seeded demo data.
+
+## Deploy to other platforms
 
 For production deployment:
 
@@ -220,10 +234,10 @@ mvn package -DskipTests
 
 3. Deploy to any Java-capable server (Heroku, AWS, DigitalOcean, etc.)
 
-## Known Limitations
+## Limitations
 
 - H2 in-memory database loses data on restart (use PostgreSQL for persistence)
-- Image storage is local filesystem (configure cloud storage for production)
+- Local image storage is filesystem-based; Render uses a persistent disk. Configure cloud object storage if uploads need to be shared across multiple app instances.
 - WebSocket reconnection may require page refresh in edge cases
 - No email verification on registration
 - No password reset functionality
