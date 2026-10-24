@@ -24,10 +24,13 @@
             padding: 16px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
             justify-content: space-between;
+            gap: 4px;
         }
         .chat-sidebar-header h3 { font-size: 1rem; font-weight: 600; }
+        .chat-expiry-note { color: var(--text-muted); font-size: 0.72rem; line-height: 1.4; }
         .chat-search {
             width: 100%;
             padding: 8px 12px;
@@ -312,6 +315,7 @@
                 <div class="chat-sidebar" id="chatSidebar">
                     <div class="chat-sidebar-header">
                         <h3>💬 Chats</h3>
+                        <div class="chat-expiry-note">Approved chats and their messages are deleted 24 hours after acceptance.</div>
                     </div>
                     <input type="text" class="chat-search" id="chatSearch" placeholder="Search conversations..." oninput="filterConversations()">
                     <div class="chat-list" id="chatList">

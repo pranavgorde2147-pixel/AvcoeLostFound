@@ -9,6 +9,7 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     List<Claim> findByItemIdOrderByCreatedAtDesc(Long itemId);
     List<Claim> findByClaimantIdOrderByCreatedAtDesc(Long claimantId);
     Optional<Claim> findByItemIdAndClaimantId(Long itemId, Long claimantId);
+    List<Claim> findByConversationId(Long conversationId);
     long countByItemId(Long itemId);
     long countByClaimantId(Long claimantId);
     long countByStatus(Claim.ClaimStatus status);

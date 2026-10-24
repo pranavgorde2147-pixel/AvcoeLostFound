@@ -47,6 +47,10 @@ public class Item {
     @Column(nullable = false)
     private ItemStatus status;
 
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean listed = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporter_id", nullable = false)
     private User reporter;

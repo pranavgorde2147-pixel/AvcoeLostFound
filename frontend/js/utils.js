@@ -105,6 +105,7 @@ function initSidebar() {
         { href: '/found-items.html', icon: '📦', label: 'Found Items' },
         { href: '/messages.html', icon: '💬', label: 'Messages' },
         { section: 'My Items' },
+        { href: '/my-listings.html', icon: '📋', label: 'My Listings' },
         { href: '/create-lost.html', icon: '📌', label: 'Report Lost' },
         { href: '/create-found.html', icon: '✅', label: 'Report Found' },
     ];

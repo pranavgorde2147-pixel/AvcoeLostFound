@@ -13,7 +13,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     @Query("""
            SELECT i FROM Item i
            LEFT JOIN i.location location
-           WHERE (:type IS NULL OR i.itemType = :type)
+           WHERE i.listed = true
+             AND (:type IS NULL OR i.itemType = :type)
              AND (:category IS NULL OR i.category = :category)
              AND (:status IS NULL OR i.status = :status)
              AND (:search IS NULL OR
@@ -37,12 +38,12 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     Page<Item> findByStatus(Item.ItemStatus status, Pageable pageable);
     Page<Item> findByCategory(Item.ItemCategory category, Pageable pageable);
 
-    @Query("SELECT i FROM Item i WHERE i.status = 'ACTIVE' AND " +
+    @Query("SELECT i FROM Item i WHERE i.listed = true AND i.status = 'ACTIVE' AND " +
            "(LOWER(i.itemName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(i.description) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Item> searchActiveItems(@Param("query") String query, Pageable pageable);
 
-    @Query("SELECT i FROM Item i WHERE i.itemType = :type AND i.status = 'ACTIVE' AND " +
+    @Query("SELECT i FROM Item i WHERE i.listed = true AND i.itemType = :type AND i.status = 'ACTIVE' AND " +
            "(LOWER(i.itemName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(i.description) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Item> searchActiveItemsByType(@Param("query") String query, @Param("type") Item.ItemType type, Pageable pageable);
@@ -51,7 +52,7 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     long countByReporter(User reporter);
     long countByStatus(Item.ItemStatus status);
 
-    @Query("SELECT i FROM Item i WHERE i.itemType = 'FOUND' AND i.status = 'ACTIVE' " +
+    @Query("SELECT i FROM Item i WHERE i.listed = true AND i.itemType = 'FOUND' AND i.status = 'ACTIVE' " +
            "AND LOWER(i.itemName) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Item> findPossibleMatches(@Param("name") String name);
 }

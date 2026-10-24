@@ -24,9 +24,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -140,6 +142,12 @@ class ClaimServiceTest {
                 .claimant(claimant)
                 .status(Claim.ClaimStatus.VERIFICATION_IN_PROGRESS)
                 .build();
+        Conversation conversation = Conversation.builder()
+                .id(30L)
+                .claim(claim)
+                .item(item)
+                .build();
+        claim.setConversation(conversation);
         ClaimStatusUpdateRequest request = new ClaimStatusUpdateRequest();
         request.setStatus("OWNER_VERIFIED");
         SecurityContextHolder.getContext().setAuthentication(
@@ -148,13 +156,15 @@ class ClaimServiceTest {
         when(userRepository.findByEmail(reporter.getEmail())).thenReturn(Optional.of(reporter));
         when(claimRepository.findById(claim.getId())).thenReturn(Optional.of(claim));
         when(claimRepository.save(any(Claim.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ClaimResponse response = claimService.updateClaimStatus(claim.getId(), request);
 
         assertThat(response.getStatus()).isEqualTo(Claim.ClaimStatus.OWNER_VERIFIED.name());
         assertThat(response.isOwnershipConfirmed()).isTrue();
-        assertThat(item.getStatus()).isEqualTo(Item.ItemStatus.OWNER_VERIFIED);
-        verify(itemRepository).save(item);
+        assertThat(item.getStatus()).isEqualTo(Item.ItemStatus.ACTIVE);
+        assertThat(conversation.getExpiresAt()).isAfter(LocalDateTime.now())
+                .isBefore(LocalDateTime.now().plusHours(24));
+        verify(conversationRepository).save(conversation);
+        verify(itemRepository, never()).save(item);
     }
 }

@@ -23,6 +23,7 @@ public class ItemResponse {
     private String locationName;
     private String locationDescription;
     private String status;
+    private boolean listed;
     private Long reporterId;
     private String reporterName;
     private String reporterRole;

@@ -78,6 +78,12 @@ public class ItemService {
 
     public ItemResponse getItem(Long id) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Item not found"));
+        if (!item.isListed()) {
+            User user = getCurrentUser();
+            if (!item.getReporter().getId().equals(user.getId()) && user.getRole() != User.Role.ADMIN) {
+                throw new IllegalArgumentException("Item not found");
+            }
+        }
         return mapToResponse(item);
     }
 
@@ -163,7 +169,25 @@ public class ItemService {
             throw new IllegalArgumentException("Not authorized to delete this item");
         }
         item.setStatus(Item.ItemStatus.CLOSED);
+        item.setListed(false);
         itemRepository.save(item);
+    }
+
+    public ItemResponse updateListingStatus(Long id, boolean listed) {
+        Item item = itemRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Item not found"));
+        User user = getCurrentUser();
+        if (!item.getReporter().getId().equals(user.getId()) && user.getRole() != User.Role.ADMIN) {
+            throw new IllegalArgumentException("Not authorized to update this listing");
+        }
+        if (listed && item.getStatus() != Item.ItemStatus.ACTIVE
+                && item.getStatus() != Item.ItemStatus.OWNER_VERIFIED) {
+            throw new IllegalArgumentException("Only active items can be listed");
+        }
+        if (listed && item.getStatus() == Item.ItemStatus.OWNER_VERIFIED) {
+            item.setStatus(Item.ItemStatus.ACTIVE);
+        }
+        item.setListed(listed);
+        return mapToResponse(itemRepository.save(item));
     }
 
     private ItemResponse mapToResponse(Item item) {
@@ -182,6 +206,7 @@ public class ItemService {
                 .locationName(item.getLocation() != null ? item.getLocation().getName() : item.getLocationDescription())
                 .locationDescription(item.getLocationDescription())
                 .status(item.getStatus().name())
+                .listed(item.isListed())
                 .reporterId(item.getReporter().getId())
                 .reporterName(item.getReporter().getFullName())
                 .reporterRole(item.getReporter().getRole().name())

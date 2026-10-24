@@ -101,6 +101,9 @@ class ApiClient {
     getItem(id) { return this.get(`/items/${id}`); }
     createItem(data) { return this.post('/items', data); }
     deleteItem(id) { return this.delete(`/items/${id}`); }
+    updateItemListing(id, listed) {
+        return this.put(`/items/${id}/listing?listed=${listed}`);
+    }
     getMyItems(type) { return this.get(`/items/my${type ? `?type=${type}` : ''}`); }
     getPossibleMatches(id) { return this.get(`/items/${id}/matches`); }
 

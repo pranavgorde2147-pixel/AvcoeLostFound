@@ -48,6 +48,16 @@ class ItemRepositoryTest {
         saveItem(reporter, canteen, "Black Backpack", Item.ItemType.FOUND, Item.ItemCategory.BAGS);
         saveItem(reporter, library, "Black Backpack", Item.ItemType.LOST, Item.ItemCategory.BAGS);
         saveItem(reporter, library, "Black Backpack", Item.ItemType.FOUND, Item.ItemCategory.OTHER);
+        itemRepository.save(Item.builder()
+                .itemName("Black Backpack")
+                .itemType(Item.ItemType.FOUND)
+                .category(Item.ItemCategory.BAGS)
+                .dateOfEvent(LocalDateTime.now())
+                .location(library)
+                .status(Item.ItemStatus.ACTIVE)
+                .listed(false)
+                .reporter(reporter)
+                .build());
 
         Page<Item> results = itemRepository.findMatchingItems(
                 Item.ItemType.FOUND,

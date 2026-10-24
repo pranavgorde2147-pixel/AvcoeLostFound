@@ -75,4 +75,14 @@ public class ItemController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PutMapping("/{id}/listing")
+    public ResponseEntity<?> updateListingStatus(@PathVariable Long id, @RequestParam boolean listed) {
+        try {
+            ItemResponse response = itemService.updateListingStatus(id, listed);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

@@ -44,6 +44,9 @@ public class ClaimService {
         Item item = itemRepository.findById(request.getItemId())
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
+        if (!item.isListed()) {
+            throw new IllegalArgumentException("This item is no longer accepting requests");
+        }
         if (item.getStatus() != Item.ItemStatus.ACTIVE
                 && item.getStatus() != Item.ItemStatus.CLAIM_IN_PROGRESS) {
             throw new IllegalArgumentException("This item is no longer accepting requests");
@@ -159,8 +162,11 @@ public class ClaimService {
         if (approved) {
             claim.setOwnershipConfirmed(true);
             claim.setStatus(Claim.ClaimStatus.OWNER_VERIFIED);
-            claim.getItem().setStatus(Item.ItemStatus.OWNER_VERIFIED);
-            itemRepository.save(claim.getItem());
+            Conversation conversation = claim.getConversation();
+            if (conversation != null) {
+                conversation.setExpiresAt(LocalDateTime.now().plusHours(24));
+                conversationRepository.save(conversation);
+            }
         } else {
             claim.setStatus(Claim.ClaimStatus.REJECTED);
             if (claim.getItem().getStatus() == Item.ItemStatus.CLAIM_IN_PROGRESS) {

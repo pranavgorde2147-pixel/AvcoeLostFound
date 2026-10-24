@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
     Page<Message> findByConversationIdOrderByCreatedAtAsc(Long conversationId, Pageable pageable);
+    void deleteByConversationId(Long conversationId);
 
     @Modifying
     @Query("UPDATE Message m SET m.read = true, m.readAt = CURRENT_TIMESTAMP WHERE m.conversation.id = :conversationId AND m.sender.id != :userId AND m.read = false")
