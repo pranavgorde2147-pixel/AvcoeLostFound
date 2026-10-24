@@ -203,16 +203,14 @@ The application uses 14 database tables:
 
 ## Deploy to Render
 
-The repository includes a Render Blueprint in `render.yaml`. It builds the Docker image, provisions PostgreSQL, stores uploaded images on a persistent disk, disables demo accounts and the H2 console, and generates a JWT signing secret. These resources use paid Render plans so data and uploads survive restarts; review Render's current pricing before applying the Blueprint.
+The repository includes a free Render Blueprint in `render.yaml`. It creates only a free web service, uses the default in-memory H2 database, disables demo accounts and the H2 console, and generates a JWT signing secret. No paid database or persistent disk is provisioned.
 
-1. Push this repository to GitHub.
-2. In the [Render Dashboard](https://dashboard.render.com), select **New → Blueprint** and connect this GitHub repository.
-3. Review the services and charges shown from `render.yaml`, then apply the Blueprint.
-4. In the web service's Environment settings, set `APP_INITIAL_ADMIN_EMAIL` and `APP_INITIAL_ADMIN_PASSWORD` to create the first administrator. Use a password with at least 12 characters. The account is created on startup if it does not already exist.
-5. Wait for the deploy to finish, open the generated `onrender.com` URL, and register a regular account.
-6. Keep database credentials and signing secrets in Render environment settings. Do not commit production secrets.
+1. In the [Render Dashboard](https://dashboard.render.com), select **New → Blueprint** and connect this GitHub repository.
+2. Confirm the Blueprint shows a **Free** web service and no database or disk, then apply it. Do not upgrade the service or add paid resources.
+3. Set `APP_INITIAL_ADMIN_EMAIL` and `APP_INITIAL_ADMIN_PASSWORD` when prompted. Use a password with at least 12 characters. The account is created as an admin on startup if it does not already exist.
+4. Wait for deployment to finish, open the generated `onrender.com` URL, and register regular accounts.
 
-The Render service uses PostgreSQL and stores uploads under `/app/uploads` on its persistent disk. Local development continues to use H2 and seeded demo data.
+**Free-tier limitations:** Render spins down an idle free web service and its filesystem is ephemeral. This app's free deployment uses an in-memory database and stores uploaded images locally, so user accounts, listings, messages, and images can be lost when the service sleeps, restarts, or redeploys. The site may take about a minute to wake after inactivity. Render free services have usage limits; check the current Render free plan terms. This option is suitable for a demo, not reliable long-term storage or production use. Local development continues to use H2 and seeded demo data.
 
 ## Deploy to other platforms
 

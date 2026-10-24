@@ -2,31 +2,11 @@ services:
   - type: web
     name: avcoe-lostfound
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /
-    disk:
-      name: uploads
-      mountPath: /app/uploads
-      sizeGB: 1
     envVars:
-      - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://${{avcoe-lostfound-db.hostname}}:${{avcoe-lostfound-db.port}}/${{avcoe-lostfound-db.database}}
-      - key: SPRING_DATASOURCE_USERNAME
-        fromDatabase:
-          name: avcoe-lostfound-db
-          property: user
-      - key: SPRING_DATASOURCE_PASSWORD
-        fromDatabase:
-          name: avcoe-lostfound-db
-          property: password
-      - key: SPRING_DATASOURCE_DRIVER_CLASS_NAME
-        value: org.postgresql.Driver
-      - key: SPRING_JPA_DATABASE_PLATFORM
-        value: org.hibernate.dialect.PostgreSQLDialect
-      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
-        value: update
       - key: SPRING_H2_CONSOLE_ENABLED
         value: "false"
       - key: APP_SEED_DEMO_DATA
@@ -38,13 +18,6 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: UPLOAD_DIR
-        value: /app/uploads
+        value: /tmp/uploads
       - key: LOGGING_LEVEL_COM_AVCOE_LOSTFOUND
         value: INFO
-
-databases:
-  - name: avcoe-lostfound-db
-    databaseName: avcoe_lostfound
-    user: avcoe_lostfound
-    plan: basic-256mb
-    postgresMajorVersion: "16"
