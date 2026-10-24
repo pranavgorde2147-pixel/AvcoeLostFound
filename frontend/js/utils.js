@@ -58,6 +58,7 @@ function getStatusBadge(status) {
         'OWNER_VERIFIED': '<span class="badge badge-verified">Owner Verified</span>',
         'VERIFICATION_IN_PROGRESS': '<span class="badge badge-pending">Verifying</span>',
         'PENDING': '<span class="badge badge-pending">Pending</span>',
+        'REJECTED': '<span class="badge" style="background:var(--danger);color:white;">Declined</span>',
         'COMPLETED': '<span class="badge badge-verified">Completed</span>',
         'SCHEDULED': '<span class="badge badge-active">Scheduled</span>',
         'CANCELLED': '<span class="badge" style="background:var(--text-muted);color:white;">Cancelled</span>',

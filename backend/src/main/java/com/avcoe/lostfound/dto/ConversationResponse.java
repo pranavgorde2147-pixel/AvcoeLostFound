@@ -10,6 +10,12 @@ public class ConversationResponse {
     private String title;
     private Long itemId;
     private String itemName;
+    private String itemType;
+    private Long claimId;
+    private String claimStatus;
+    private String verificationQuestion;
+    private boolean chatUnlocked;
+    private boolean canReviewClaim;
     private String otherUserName;
     private List<ParticipantResponse> participants;
     private String lastMessage;

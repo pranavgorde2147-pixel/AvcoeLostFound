@@ -357,7 +357,10 @@
             const refId = n.referenceId;
 
             if (refType === 'CLAIM' && refId) {
-                return `/item.html?id=${refId}`;
+                return '/messages.html';
+            }
+            if (refType === 'CONVERSATION' && refId) {
+                return `/messages.html?conversationId=${refId}`;
             }
             if (refType === 'CONVERSATION' || refType === 'HANDOVER') {
                 return '/messages.html';

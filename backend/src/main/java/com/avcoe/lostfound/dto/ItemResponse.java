@@ -30,6 +30,7 @@ public class ItemResponse {
     private String currentItemLocation;
     private String conditionDescription;
     private boolean hasVerificationQuestion;
+    private String verificationQuestion;
     private List<ImageResponse> images;
     private int claimCount;
     private LocalDateTime createdAt;

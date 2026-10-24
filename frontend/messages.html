@@ -104,6 +104,15 @@
         .chat-header-info { flex: 1; min-width: 0; }
         .chat-header-name { font-size: 1rem; font-weight: 600; }
         .chat-header-item { font-size: 0.75rem; color: var(--text-muted); }
+        .claim-review {
+            padding: 14px 20px;
+            background: rgba(245, 158, 11, 0.08);
+            border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .claim-review-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .chat-input-area.is-locked { opacity: 0.6; }
 
         .chat-messages {
             flex: 1;
@@ -313,7 +322,7 @@
                     <div id="noConversations" class="empty-state" style="display:none;padding:40px 20px;">
                         <div class="empty-state-icon">📭</div>
                         <div class="empty-state-title">No conversations yet</div>
-                        <div class="empty-state-desc">Claim an item to start a conversation.</div>
+                        <div class="empty-state-desc">Respond to a listing to start a conversation.</div>
                     </div>
                 </div>
 
@@ -334,6 +343,7 @@
                             </div>
                         </div>
 
+                        <div class="claim-review" id="claimReview" style="display:none;" role="status"></div>
                         <div class="chat-messages" id="chatMessages"></div>
 
                         <div class="typing-indicator-msg" id="typingIndicator">
@@ -371,7 +381,7 @@
         let currentSubscription = null;
         let allMessages = [];
 
-        async function loadConversations() {
+        async function loadConversations(openRequestedConversation = true) {
             const chatList = document.getElementById('chatList');
             const noConversations = document.getElementById('noConversations');
 
@@ -387,6 +397,14 @@
 
                 noConversations.style.display = 'none';
                 renderConversations(conversations);
+                if (activeConversationId !== null) {
+                    const activeConversation = conversations.find(c => c.id === activeConversationId);
+                    if (activeConversation) renderClaimReview(activeConversation);
+                }
+                const requestedId = Number(new URLSearchParams(window.location.search).get('conversationId'));
+                if (openRequestedConversation && requestedId && conversations.some(c => c.id === requestedId)) {
+                    openConversation(requestedId);
+                }
             } catch (err) {
                 console.error('Error loading conversations:', err);
                 chatList.innerHTML = '<div class="empty-state" style="padding:40px 20px;"><div class="empty-state-title">Failed to load conversations</div></div>';
@@ -460,6 +478,7 @@
             headerAvatar.style.background = color;
             document.getElementById('chatHeaderName').textContent = otherName;
             document.getElementById('chatHeaderItem').textContent = conv.itemName ? `📦 ${conv.itemName}` : '';
+            renderClaimReview(conv);
 
             document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
             const activeItem = document.querySelector(`.chat-list-item[onclick="openConversation(${conversationId})"]`);
@@ -507,6 +526,57 @@
             `;
 
             container.innerHTML = html;
+        }
+
+        function renderClaimReview(conv) {
+            const panel = document.getElementById('claimReview');
+            const input = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendBtn');
+            const inputArea = document.querySelector('.chat-input-area');
+            if (!conv.claimId) {
+                panel.style.display = 'none';
+                input.disabled = false;
+                sendButton.disabled = false;
+                input.placeholder = 'Type a message...';
+                inputArea.classList.remove('is-locked');
+                return;
+            }
+
+            const approved = conv.chatUnlocked;
+            const declined = conv.claimStatus === 'REJECTED' || conv.claimStatus === 'CANCELLED';
+            input.disabled = !approved;
+            sendButton.disabled = !approved;
+            input.placeholder = approved ? 'Type a message...' : 'Chat opens after the reporter approves';
+            inputArea.classList.toggle('is-locked', !approved);
+            panel.style.display = 'block';
+
+            if (approved) {
+                panel.innerHTML = '<strong>Request approved.</strong> Chat is open. You can coordinate here.';
+            } else if (declined) {
+                panel.innerHTML = '<strong>Request declined.</strong> Chat is closed for this request.';
+            } else if (conv.canReviewClaim) {
+                const question = conv.verificationQuestion || 'Review the response below.';
+                panel.innerHTML = `
+                    <strong>Review this request before opening chat.</strong>
+                    <div style="margin-top:6px;">${escapeHtml(question)}</div>
+                    <div class="claim-review-actions">
+                        <button class="btn btn-sm btn-primary" onclick="reviewClaim(${conv.claimId}, 'OWNER_VERIFIED')">✓ Agree &amp; open chat</button>
+                        <button class="btn btn-sm btn-secondary" onclick="reviewClaim(${conv.claimId}, 'REJECTED')">Dismiss</button>
+                    </div>`;
+            } else {
+                panel.innerHTML = '<strong>Answer sent.</strong> The reporter must review your request before chat opens.';
+            }
+        }
+
+        async function reviewClaim(claimId, status) {
+            try {
+                await api.updateClaimStatus(claimId, { status });
+                showToast(status === 'OWNER_VERIFIED' ? 'Request approved. Chat is now open.' : 'Request dismissed.', 'success');
+                await loadConversations(false);
+                if (activeConversationId !== null) openConversation(activeConversationId);
+            } catch (err) {
+                showToast(err.message || 'Unable to update this request.', 'error');
+            }
         }
 
         function renderMessage(msg) {
@@ -566,7 +636,7 @@
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const content = input.value.trim();
-            if (!content || !activeConversationId) return;
+            if (!content || !activeConversationId || input.disabled) return;
 
             input.value = '';
             input.style.height = 'auto';
@@ -594,6 +664,8 @@
                 updateConversationPreview(activeConversationId, content);
             } catch (err) {
                 console.error('Error sending message:', err);
+                allMessages = allMessages.filter(message => message.id !== tempMsg.id);
+                renderMessages();
                 showToast('Failed to send message', 'error');
             } finally {
                 sendBtn.disabled = false;
@@ -730,7 +802,10 @@
         loadConversations();
         connectWebSocket();
         handleResize();
-        setInterval(loadUnreadCount, 30000);
+        setInterval(() => {
+            loadConversations(false);
+            loadUnreadCount();
+        }, 30000);
     </script>
 </body>
 </html>

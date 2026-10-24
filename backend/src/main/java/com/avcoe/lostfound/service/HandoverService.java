@@ -46,6 +46,10 @@ public class HandoverService {
             throw new IllegalArgumentException("Not authorized to create handover");
         }
 
+        if (claim.getItem().getItemType() != Item.ItemType.FOUND) {
+            throw new IllegalArgumentException("Handovers can only be scheduled for found items");
+        }
+
         if (claim.getStatus() != Claim.ClaimStatus.OWNER_VERIFIED) {
             throw new IllegalArgumentException("Claim must be verified before scheduling handover");
         }

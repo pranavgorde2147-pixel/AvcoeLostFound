@@ -160,10 +160,10 @@ The development setup seeds demo accounts and sample data. The Render deployment
 ## Key Features
 
 ### 1. Private Verification System
-When a found item is created, the finder sets a verification question. When someone claims the item, the system automatically sends this question privately. Only the true owner can answer correctly.
+Found-item reporters set a verification question for claimants to answer. Lost-item reporters can set a question for someone who found their item, with a general question used by default. Each response is saved as the first message in a private conversation; the reporter can approve or dismiss the request, and normal chat stays locked until approval.
 
 ### 2. Isolated Claim Conversations
-Each claim creates a completely separate private conversation. Claimant B cannot see Claimant C's messages. Only the finder and the specific claimant can see their conversation.
+Each claim or lost-item response creates a separate private conversation. Other claimants cannot see the response or messages. Only the reporter and the specific respondent can see their conversation.
 
 ### 3. Real-time Chat
 WebSocket-based real-time messaging. Messages appear instantly without page refresh.

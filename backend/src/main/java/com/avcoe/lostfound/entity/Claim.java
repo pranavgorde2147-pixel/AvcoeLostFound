@@ -36,6 +36,7 @@ public class Claim {
     @JoinColumn(name = "conversation_id")
     private Conversation conversation;
 
+    @Column(length = 1000)
     private String verificationAnswer;
 
     private boolean ownershipConfirmed = false;

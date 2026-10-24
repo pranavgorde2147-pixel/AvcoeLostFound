@@ -305,6 +305,12 @@
                                 <div class="form-hint">This helps others verify ownership. Be specific but avoid sharing sensitive info.</div>
                             </div>
 
+                            <div class="form-group">
+                                <label class="form-label">Question for someone who finds it</label>
+                                <input type="text" id="verificationQuestion" class="form-input" placeholder="e.g., Where and when did you find it?" maxlength="200">
+                                <div class="form-hint">People who respond to this listing will answer before you decide whether to open chat. Leave blank to use a general question.</div>
+                            </div>
+
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary" onclick="goToStep(2)">Next: Location →</button>
                             </div>
@@ -474,7 +480,8 @@
                 approximateTime: timeVal || null,
                 locationId: parseInt(document.getElementById('locationId').value),
                 locationDescription: document.getElementById('locationDescription').value.trim() || null,
-                identifyingCharacteristics: document.getElementById('identifyingCharacteristics').value.trim() || null
+                identifyingCharacteristics: document.getElementById('identifyingCharacteristics').value.trim() || null,
+                verificationQuestion: document.getElementById('verificationQuestion').value.trim() || null
             };
         }
 

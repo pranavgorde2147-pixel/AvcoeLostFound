@@ -388,7 +388,7 @@
                 renderActions();
 
                 loadMatches();
-                if (itemData.itemType === 'FOUND' && isReporter()) {
+                if (isReporter()) {
                     loadClaims();
                 }
             } catch (err) {
@@ -400,8 +400,7 @@
         }
 
         function isReporter() {
-            if (!itemData || !itemData.reporter) return false;
-            return itemData.reporter.id === user.id;
+            return !!itemData && String(itemData.reporterId) === String(user.id);
         }
 
         function renderTypeBadge() {
@@ -537,17 +536,16 @@
 
         function renderReporter() {
             const el = document.getElementById('reporterSection');
-            const reporter = itemData.reporter;
-            if (!reporter) {
+            if (!itemData.reporterName) {
                 el.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;">Unknown reporter</div>';
                 return;
             }
 
             el.innerHTML = `
-                <div class="avatar" style="background:${auth.getAvatarColor(reporter.fullName)}">${auth.getInitials(reporter.fullName)}</div>
+                <div class="avatar" style="background:${auth.getAvatarColor(itemData.reporterName)}">${auth.getInitials(itemData.reporterName)}</div>
                 <div class="reporter-info">
-                    <div class="reporter-name">${escapeHtml(reporter.fullName)}</div>
-                    <div class="reporter-role">${escapeHtml(reporter.role || 'student')}</div>
+                    <div class="reporter-name">${escapeHtml(itemData.reporterName)}</div>
+                    <div class="reporter-role">${escapeHtml(itemData.reporterRole || 'student')}</div>
                 </div>`;
         }
 
@@ -555,8 +553,9 @@
             const el = document.getElementById('actionButtons');
             const buttons = [];
 
-            if (!isReporter() && itemData.itemType === 'FOUND' && itemData.status === 'ACTIVE') {
-                buttons.push(`<button class="btn btn-primary btn-block" onclick="openClaimModal()">🏷️ I Think This Is Mine</button>`);
+            if (!isReporter() && ['ACTIVE', 'CLAIM_IN_PROGRESS'].includes(itemData.status)) {
+                const actionLabel = itemData.itemType === 'FOUND' ? '🏷️ I Think This Is Mine' : '🙋 I Found This Item';
+                buttons.push(`<button class="btn btn-primary btn-block" onclick="openClaimModal()">${actionLabel}</button>`);
             }
 
             buttons.push(`<button class="btn btn-secondary btn-block" onclick="openReportModal()">🚩 Report Listing</button>`);
@@ -602,17 +601,14 @@
                 list.innerHTML = claimArr.map(claim => `
                     <div class="claim-card">
                         <div class="claim-header">
-                            <div class="avatar avatar-sm" style="background:${auth.getAvatarColor(claim.claimant?.fullName || '')}">${auth.getInitials(claim.claimant?.fullName || '?')}</div>
-                            <div class="claimant-name">${escapeHtml(claim.claimant?.fullName || 'Unknown')}</div>
+                            <div class="avatar avatar-sm" style="background:${auth.getAvatarColor(claim.claimantName || '')}">${auth.getInitials(claim.claimantName || '?')}</div>
+                            <div class="claimant-name">${escapeHtml(claim.claimantName || 'Unknown')}</div>
                             ${getStatusBadge(claim.status)}
                         </div>
                         <div class="claim-message">${escapeHtml(claim.claimMessage || '')}</div>
                         <div class="claim-actions">
-                            ${claim.status === 'PENDING' ? `
-                                <button class="btn btn-sm btn-primary" onclick="verifyOwner(${claim.id})">✓ Verify Owner</button>
-                                <button class="btn btn-sm btn-success" onclick="scheduleHandover(${claim.id})">📅 Schedule Handover</button>
-                            ` : ''}
-                            ${claim.status === 'OWNER_VERIFIED' ? `
+                            ${claim.conversationId ? `<a class="btn btn-sm btn-primary" href="/messages.html?conversationId=${claim.conversationId}">💬 Review in chat</a>` : ''}
+                            ${claim.status === 'OWNER_VERIFIED' && itemData.itemType === 'FOUND' ? `
                                 <button class="btn btn-sm btn-success" onclick="scheduleHandover(${claim.id})">📅 Schedule Handover</button>
                             ` : ''}
                         </div>
@@ -624,42 +620,34 @@
         }
 
         function openClaimModal() {
-            showModal('Claim This Item',
+            const isFoundListing = itemData.itemType === 'FOUND';
+            const prompt = itemData.verificationQuestion || (isFoundListing
+                ? 'What detail proves this item belongs to you?'
+                : 'Where and when did you find this item? Include a detail that helps verify it.');
+            showModal(isFoundListing ? 'Claim This Item' : 'Respond to Lost Item',
                 `<div class="form-group">
-                    <label class="form-label">Why do you think this is your item?</label>
-                    <textarea id="claimMessage" class="form-textarea" rows="4" placeholder="Describe why you believe this item belongs to you..."></textarea>
+                    <label class="form-label">${escapeHtml(prompt)}</label>
+                    <textarea id="claimMessage" class="form-textarea" rows="4" maxlength="1000" placeholder="${isFoundListing ? 'Answer the verification question and share any helpful details...' : 'Tell the owner where you found it and how to identify it...'}"></textarea>
                 </div>`,
                 `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                 <button class="btn btn-primary" onclick="submitClaim()">Submit Claim</button>`
+                 <button class="btn btn-primary" onclick="submitClaim()">${isFoundListing ? 'Submit Claim' : 'Send to Owner'}</button>`
             );
         }
 
         async function submitClaim() {
             const message = document.getElementById('claimMessage').value.trim();
             if (!message) {
-                showToast('Please provide a reason for your claim.', 'error');
+                showToast('Please answer the verification question.', 'error');
                 return;
             }
 
             try {
-                await api.createClaim({ itemId: parseInt(itemId), claimMessage: message });
+                const claim = await api.createClaim({ itemId: parseInt(itemId), claimMessage: message });
                 closeModal();
-                showToast('Claim submitted successfully! The owner will be notified.', 'success');
-                if (isReporter() && itemData.itemType === 'FOUND') {
-                    loadClaims();
-                }
+                showToast('Your answer was sent. Chat will open after the reporter approves your request.', 'success');
+                window.location.href = `/messages.html?conversationId=${claim.conversationId}`;
             } catch (err) {
                 showToast(err.message || 'Failed to submit claim.', 'error');
-            }
-        }
-
-        async function verifyOwner(claimId) {
-            try {
-                await api.updateClaimStatus(claimId, { status: 'OWNER_VERIFIED' });
-                showToast('Owner verified successfully!', 'success');
-                loadClaims();
-            } catch (err) {
-                showToast(err.message || 'Failed to verify owner.', 'error');
             }
         }
 

@@ -53,7 +53,19 @@ public class ChatService {
             response.setTitle(conv.getTitle());
             response.setItemId(conv.getItem().getId());
             response.setItemName(conv.getItem().getItemName());
-                conv.getParticipants().stream()
+            response.setItemType(conv.getItem().getItemType().name());
+            if (conv.getClaim() != null) {
+                Claim claim = conv.getClaim();
+                response.setClaimId(claim.getId());
+                response.setClaimStatus(claim.getStatus().name());
+                response.setVerificationQuestion(conv.getItem().getVerificationQuestion());
+                response.setChatUnlocked(isChatUnlocked(claim));
+                response.setCanReviewClaim(conv.getItem().getReporter().getId().equals(user.getId())
+                        && !isReviewComplete(claim));
+            } else {
+                response.setChatUnlocked(true);
+            }
+            conv.getParticipants().stream()
                     .filter(participant -> !participant.getId().equals(user.getId()))
                     .findFirst()
                     .ifPresent(participant -> response.setOtherUserName(participant.getFullName()));
@@ -130,6 +142,10 @@ public class ChatService {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
 
+        if (conversation.getClaim() != null && !isChatUnlocked(conversation.getClaim())) {
+            throw new IllegalArgumentException("Chat is locked until the reporter approves this request");
+        }
+
         Message.MessageType msgType = Message.MessageType.TEXT;
         if (request.getMessageType() != null) {
             try {
@@ -183,6 +199,16 @@ public class ChatService {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
 
+        if (!conversation.getItem().getReporter().getId().equals(sender.getId())) {
+            throw new IllegalArgumentException("Only the item reporter can send a verification question");
+        }
+        if (question == null || question.isBlank()) {
+            throw new IllegalArgumentException("Verification question cannot be empty");
+        }
+        if (conversation.getClaim() != null && isReviewComplete(conversation.getClaim())) {
+            throw new IllegalArgumentException("This request has already been reviewed");
+        }
+
         Message message = Message.builder()
                 .conversation(conversation)
                 .sender(sender)
@@ -214,5 +240,16 @@ public class ChatService {
         response.setRead(message.isRead());
         response.setCreatedAt(message.getCreatedAt());
         return response;
+    }
+
+    private boolean isChatUnlocked(Claim claim) {
+        return claim.getStatus() == Claim.ClaimStatus.OWNER_VERIFIED
+                || claim.getStatus() == Claim.ClaimStatus.COMPLETED;
+    }
+
+    private boolean isReviewComplete(Claim claim) {
+        return isChatUnlocked(claim)
+                || claim.getStatus() == Claim.ClaimStatus.REJECTED
+                || claim.getStatus() == Claim.ClaimStatus.CANCELLED;
     }
 }

@@ -18,15 +18,18 @@ public class ClaimService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
+    private final MessageRepository messageRepository;
     private final NotificationService notificationService;
 
     public ClaimService(ClaimRepository claimRepository, ItemRepository itemRepository,
                         UserRepository userRepository, ConversationRepository conversationRepository,
+                        MessageRepository messageRepository,
                         NotificationService notificationService) {
         this.claimRepository = claimRepository;
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
         this.conversationRepository = conversationRepository;
+        this.messageRepository = messageRepository;
         this.notificationService = notificationService;
     }
 
@@ -41,12 +44,17 @@ public class ClaimService {
         Item item = itemRepository.findById(request.getItemId())
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
-        if (item.getItemType() != Item.ItemType.FOUND) {
-            throw new IllegalArgumentException("Can only claim FOUND items");
+        if (item.getStatus() != Item.ItemStatus.ACTIVE
+                && item.getStatus() != Item.ItemStatus.CLAIM_IN_PROGRESS) {
+            throw new IllegalArgumentException("This item is no longer accepting requests");
         }
 
         if (item.getReporter().getId().equals(claimant.getId())) {
-            throw new IllegalArgumentException("Cannot claim your own item");
+            throw new IllegalArgumentException("Cannot respond to your own item");
+        }
+
+        if (request.getClaimMessage() == null || request.getClaimMessage().isBlank()) {
+            throw new IllegalArgumentException("Please answer the verification question");
         }
 
         Optional<Claim> existingClaim = claimRepository.findByItemIdAndClaimantId(item.getId(), claimant.getId());
@@ -58,6 +66,7 @@ public class ClaimService {
                 .item(item)
                 .claimant(claimant)
                 .claimMessage(request.getClaimMessage())
+                .verificationAnswer(request.getClaimMessage())
                 .status(Claim.ClaimStatus.VERIFICATION_IN_PROGRESS)
                 .build();
         claim = claimRepository.save(claim);
@@ -75,16 +84,22 @@ public class ClaimService {
         claim.setConversation(conversation);
         claimRepository.save(claim);
 
-        item.setStatus(Item.ItemStatus.CLAIM_IN_PROGRESS);
-        itemRepository.save(item);
+        messageRepository.save(Message.builder()
+                .conversation(conversation)
+                .sender(claimant)
+                .content(request.getClaimMessage().trim())
+                .messageType(Message.MessageType.VERIFICATION_ANSWER)
+                .read(false)
+                .build());
 
         notificationService.createNotification(
                 item.getReporter(),
-                "New Claim on Your Found Item",
-                claimant.getFullName() + " thinks your found \"" + item.getItemName() + "\" is theirs.",
+                item.getItemType() == Item.ItemType.FOUND ? "New Claim on Your Found Item" : "Someone Found Your Lost Item",
+                claimant.getFullName() + (item.getItemType() == Item.ItemType.FOUND
+                        ? " thinks your found \"" : " may have found \"") + item.getItemName() + "\". Review their answer in chat.",
                 Notification.NotificationType.CLAIM_RECEIVED,
-                claim.getId(),
-                "CLAIM"
+                conversation.getId(),
+                "CONVERSATION"
         );
 
         return mapToResponse(claim);
@@ -120,25 +135,52 @@ public class ClaimService {
             throw new IllegalArgumentException("Not authorized to update this claim");
         }
 
+        Claim.ClaimStatus requestedStatus = null;
         if (request.getStatus() != null) {
-            claim.setStatus(Claim.ClaimStatus.valueOf(request.getStatus().toUpperCase()));
+            try {
+                requestedStatus = Claim.ClaimStatus.valueOf(request.getStatus().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid claim status");
+            }
+        }
+        boolean approved = request.isOwnershipConfirmed()
+                || requestedStatus == Claim.ClaimStatus.OWNER_VERIFIED;
+        boolean rejected = requestedStatus == Claim.ClaimStatus.REJECTED;
+        if (!approved && !rejected) {
+            throw new IllegalArgumentException("Claim must be approved or declined");
+        }
+        if (claim.getStatus() == Claim.ClaimStatus.OWNER_VERIFIED
+                || claim.getStatus() == Claim.ClaimStatus.REJECTED
+                || claim.getStatus() == Claim.ClaimStatus.COMPLETED
+                || claim.getStatus() == Claim.ClaimStatus.CANCELLED) {
+            throw new IllegalArgumentException("This request has already been reviewed");
         }
 
-        if (request.isOwnershipConfirmed()) {
+        if (approved) {
             claim.setOwnershipConfirmed(true);
             claim.setStatus(Claim.ClaimStatus.OWNER_VERIFIED);
             claim.getItem().setStatus(Item.ItemStatus.OWNER_VERIFIED);
             itemRepository.save(claim.getItem());
-
-            notificationService.createNotification(
-                    claim.getClaimant(),
-                    "Ownership Verified!",
-                    "Your claim for \"" + claim.getItem().getItemName() + "\" has been verified. A handover can now be scheduled.",
-                    Notification.NotificationType.OWNERSHIP_CONFIRMED,
-                    claim.getId(),
-                    "CLAIM"
-            );
+        } else {
+            claim.setStatus(Claim.ClaimStatus.REJECTED);
+            if (claim.getItem().getStatus() == Item.ItemStatus.CLAIM_IN_PROGRESS) {
+                claim.getItem().setStatus(Item.ItemStatus.ACTIVE);
+                itemRepository.save(claim.getItem());
+            }
         }
+
+        notificationService.createNotification(
+                claim.getClaimant(),
+                approved ? "Request Approved" : "Request Declined",
+                approved
+                        ? "Your request about \"" + claim.getItem().getItemName() + "\" was approved. You can now chat with the reporter."
+                            + (claim.getItem().getItemType() == Item.ItemType.FOUND
+                                ? " A handover can also be scheduled." : "")
+                        : "Your request about \"" + claim.getItem().getItemName() + "\" was declined.",
+                approved ? Notification.NotificationType.OWNERSHIP_CONFIRMED : Notification.NotificationType.CLAIM_STATUS_CHANGED,
+                claim.getId(),
+                "CLAIM"
+        );
 
         claim = claimRepository.save(claim);
         return mapToResponse(claim);

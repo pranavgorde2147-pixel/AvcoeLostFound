@@ -50,6 +50,10 @@ public class ItemService {
         Item.ItemType itemType = Item.ItemType.valueOf(request.getItemType().toUpperCase());
         Item.ItemCategory category = Item.ItemCategory.valueOf(request.getCategory().toUpperCase());
         Item.ItemStatus status = Item.ItemStatus.ACTIVE;
+        String verificationQuestion = request.getVerificationQuestion();
+        if (itemType == Item.ItemType.LOST && (verificationQuestion == null || verificationQuestion.isBlank())) {
+            verificationQuestion = "Where and when did you find this item? Include a detail that helps verify it.";
+        }
 
         Item item = Item.builder()
                 .itemName(request.getItemName())
@@ -65,7 +69,7 @@ public class ItemService {
                 .identifyingCharacteristics(request.getIdentifyingCharacteristics())
                 .currentItemLocation(request.getCurrentItemLocation())
                 .conditionDescription(request.getConditionDescription())
-                .verificationQuestion(itemType == Item.ItemType.FOUND ? request.getVerificationQuestion() : null)
+                .verificationQuestion(verificationQuestion)
                 .build();
 
         item = itemRepository.save(item);
@@ -185,6 +189,7 @@ public class ItemService {
                 .currentItemLocation(item.getCurrentItemLocation())
                 .conditionDescription(item.getConditionDescription())
                 .hasVerificationQuestion(item.getVerificationQuestion() != null && !item.getVerificationQuestion().isEmpty())
+                .verificationQuestion(item.getVerificationQuestion())
                 .images(images.stream().map(img -> {
                     ImageResponse ir = new ImageResponse();
                     ir.setId(img.getId());
